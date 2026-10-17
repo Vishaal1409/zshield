@@ -20,7 +20,7 @@ Note on how pages were opened: pib.gov.in and mha.gov.in returned 403 to the Web
 ## Stat 2: RBI discussion paper, digital payment frauds reported on NCRP
 
 - **Figure.** 2025: 28 lakh frauds reported, value ₹22,931 crore (from 2.6 lakh and ₹551 crore in 2021).
-- **Exact quote.** "Figures from the National Cyber Crime Reporting Portal (NCRP) indicate that frauds related to digital payments are on the rise." Table: "2021 2.6 lakh 551; 2022 6.9 lakh 2,290; 2023 13.1 lakh 7,465; 2024 24 lakh 22,848; 2025 28 lakh 22,931" (value in ₹ Crore).
+- **Exact quote.** "Figures from the National Cyber Crime Reporting Portal (NCRP) indicate that frauds related to digital payments are on the rise." Table (table text, reformatted with semicolons): "2021 2.6 lakh 551; 2022 6.9 lakh 2,290; 2023 13.1 lakh 7,465; 2024 24 lakh 22,848; 2025 28 lakh 22,931" (value in ₹ Crore).
 - **Speed / irreversibility quotes (same page).** "Given the instantaneous nature of payments through systems such as NEFT, RTGS, UPI and IMPS, the scope for timely intervention and recovery of funds becomes limited." And: "funds can be transferred instantaneously by customers (victims) with minimal effort before realising that they are being duped. Post-transaction remedies to recover such funds being limited, a defrauded user is often left with a few remedies and uncertain outcomes, which are time-consuming and show low recovery rates."
 - **Publisher / report.** Reserve Bank of India, "Discussion Paper - Exploring safeguards in digital payments to curb frauds".
 - **Published.** 9 Apr 2026.

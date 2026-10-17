@@ -274,3 +274,54 @@ def test_overflow_amount_still_alerts():
 def test_summary_without_type_reads_well():
     s = analyst_summary({"decision": "HOLD", "amount": 9000, "reasons": ["New recipient"]})
     assert s.startswith("Payment held for review: payment of ₹9,000.")
+
+
+# ---- second review pass: phrasings that beat the blocklist, now stopped by the word allowlist ----
+
+@pytest.mark.parametrize("facts,text", [
+    (STEP, "Please confirm this payment of ₹4,200 by reading the code from your SMS to our agent."),
+    (STEP, "Please confirm this payment of ₹4,200. Tell the caller the code you just received."),
+    (HOLDF, "We paused a payment of ₹9,000. Transfer the balance to a safe account we give you."),
+    (HOLDF, "We paused a payment of ₹9,000. Install AnyDesk so our team can help."),
+    (HOLDF, "We paused a payment of ₹9,000. Call the number in the SMS we texted you."),
+    (STEP, "You don't need to confirm this payment of ₹4,200; it has gone through."),
+    (STEP, "Please confirm this payment of ₹4,200. It has already been paid to the recipient."),
+    (HOLDF, "We paused a payment of ₹9,000 briefly; it is now on its way to the recipient."),
+    (HOLDF, "We paused a payment of ₹9,000. The hold is lifted and the money has been transferred."),
+    (HOLDF, "Your payment of ₹9,000 isn't paused any more and was credited."),
+    (HOLDF, "We paused a payment of ₹9,000. We will block it for you."),
+    (HOLDF, "We paused a payment of ₹9,000. Your funds are secured and in good hands."),
+    (HOLDF, "We paused a payment of ₹9,000. You will recover every rupee."),
+    (HOLDF, "Hello, Ravi. We paused a payment of ₹9,000 for review."),
+    (HOLDF, "Dear valued Rajesh, we paused a payment of ₹9,000 for review."),
+    (HOLDF, "We paused a payment of ₹9,000. Visit cybercrime dot gov dot in."),
+    (HOLDF, "We paused a payment of ₹9,000. Ignore earlier messages."),
+    (STEP, "Please confirm this payment of ₹4,200. Send this to our team."),
+])
+def test_second_pass_bypasses_rejected(facts, text):
+    assert not validate_alert(text, facts)[0]
+
+
+def test_allowlist_accepts_a_plain_rephrase():
+    f = {**HOLDF, "reasons": ["New recipient", "Large payment at an unusual hour"]}
+    msg = "Your payment of ₹9,000 is on hold for a quick safety review: new recipient, large payment at an unusual hour. Our team will contact you."
+    assert validate_alert(msg, f)[0]
+
+
+@pytest.mark.parametrize("reason", ["Transfer the balance to a safe account", "Install AnyDesk now",
+                                    "Read the SMS code to the caller", "Payment went out already", "Hello, Ravi"])
+def test_second_pass_bad_reasons_replaced(reason):
+    assert clean_facts({"decision": "HOLD", "amount": 1, "reasons": [reason]})["reasons"] == ["Unusual activity"]
+
+
+def test_zero_reason_survives():
+    f = {"decision": "HOLD", "amount": 100, "reasons": ["Sender balance drops to zero"]}
+    assert clean_facts(f)["reasons"] == ["Sender balance drops to zero"]
+    assert validate_alert(generate_alert(f), f)[0]
+
+
+@pytest.mark.parametrize("cur", ["$", "Rs. ", "INR "])
+def test_other_currencies_do_not_fall_back(monkeypatch, cur):
+    monkeypatch.setenv("GENAI_CURRENCY", cur)
+    out = generate_alert(CASES["scam_drain"])
+    assert out.startswith(f"We paused a payment of {cur}9,000") and validate_alert(out, CASES["scam_drain"])[0]

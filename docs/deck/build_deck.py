@@ -10,6 +10,8 @@ from pptx.dml.color import RGBColor
 from pptx.enum.dml import MSO_LINE
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+import datetime
+
 from pptx.util import Inches, Pt
 
 HERE = Path(__file__).parent
@@ -178,6 +180,7 @@ def build():
     s.notes_slide.notes_text_frame.text = "Appendix. All figures are from docs/problem/stats.md, quoted with their source."
     prs.core_properties.author = "ZShield team"
     prs.core_properties.title = "ZShield deck draft"
+    prs.core_properties.created = prs.core_properties.modified = datetime.datetime.now()
     prs.save(OUT)
     print("saved", OUT)
     for w in warnings:

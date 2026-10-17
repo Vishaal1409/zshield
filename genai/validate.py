@@ -4,7 +4,15 @@ import re
 
 from .rules import HOLD_WORDS, currency, forbidden
 from .sanitize import clean_facts
-from .templates import fmt_amount
+from .templates import HOLD_T, LAST_RESORT, STEP_UP_T, fmt_amount
+
+WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)?")
+# Allowlist for model-written customer alerts: template words + this payment's reason words + a few calm words.
+# A blocklist alone kept leaking new phrasings in review; any word outside this list sends us back to the template.
+CALM = set("""of the an it is has been was be to with on hold held under verify check quick now because extra security
+before do not only after new recipient unusual activity until pending temporarily flagged signs due please review
+reviewing shortly soon risk score""".split())
+TEMPLATE_WORDS = set(WORD_RE.findall(" ".join([STEP_UP_T, HOLD_T, *LAST_RESORT.values()]).lower())) - {"amt", "why"}
 
 MAX_WORDS, MAX_CHARS = 40, 300
 NUM_RE = re.compile(r"\d[\d,]*(?:\.\d+)?%?")
@@ -64,6 +72,14 @@ def validate_alert(text, facts) -> tuple:
         probs += forbidden(text)
         if re.search(r"\bone\b", _without_reasons(text, f)):
             probs.append("number written in words")
+        allowed = TEMPLATE_WORDS | CALM | set(WORD_RE.findall(" ".join(f["reasons"]).lower()))
+        plain = text
+        if f["amount"] is not None:
+            for x in (fmt_amount(f["amount"]), _indian(f["amount"])):
+                plain = plain.replace(x, " ")
+        extra = sorted(set(WORD_RE.findall(plain.lower())) - allowed)
+        if extra:
+            probs.append("words outside the allowlist: " + ", ".join(extra[:5]))
         d = f["decision"]
         if d == "STEP_UP":
             if not CONFIRM_RE.search(text) or HOLD_WORDS.search(text):

@@ -19,7 +19,7 @@ Fallback: the default is `GENAI_PROVIDER=template`, which needs no keys or netwo
 
 Optional, needs Vishaal's OK since it changes the contract: add `analyst_summary` as an extra field on `/alerts` for the Alert Detail page.
 
-Tests: `python -m pytest genai/tests -q` (91 pass, offline). Details are in `genai/README.md`.
+Tests: `python -m pytest genai/tests -q` (119 pass, offline). Details are in `genai/README.md`.
 
 Small suggestion for api/tests: set `GENAI_PROVIDER=template` in a conftest, so a dev shell with a model configured never makes the API tests call the network.
 
@@ -74,7 +74,7 @@ Charts I need by 4 PM for the deck:
 
 Numbers too: PR-AUC (model and baseline), recall at your fixed FPR, and the two-sentence threshold logic.
 
-One format note for your reason strings (`explain_top3`): they go straight into customer text, so the safety filter swaps a reason for "Unusual activity" if it has any digit or number word (except "one"), non-English characters, a URL or @, OTP/PIN, a name, or any of these words/stems: approv, blocked, cancel, declin, revers, reject, sent, released, completed, processed, paused, held, on hold, under review, refund, guarantee, safe/secure/protected, ignore, override, prompt. Over 80 characters gets cut. Good: "Account emptied in one transfer". Bad: "Amount 5x above usual" (digit).
+One format note for your reason strings (`explain_top3`): they go straight into customer text, so the safety filter swaps a reason for "Unusual activity" if it has any digit or number word (except "one" and "zero"), non-English characters, a URL or @, OTP/PIN, a name, a promise ("is safe", "secured", refund, guarantee), or decision/scam words such as approv-, block(ed), cancel, declin-, revers-, reject, sent, paid, released, complete(d), processed, successful, already, no need, paused, held, on hold, under review, code, SMS, install, remote, ignore, override, prompt. Over 80 characters gets cut. The full list is in `genai/rules.py` and `genai/sanitize.py`. Good: "Account emptied in one transfer". Bad: "Amount 5x above usual" (digit).
 
 ---
 

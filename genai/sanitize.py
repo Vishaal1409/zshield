@@ -13,7 +13,7 @@ STRIP_RE = re.compile(r"[<>{}\[\]`]")
 # customer-text rules come from rules.forbidden, the same check the validator runs on the output.
 INJECTION_RE = re.compile(
     r"\b(?:ignore|disregard|forget|override|pretend)\b|\b(?:previous|new|above) instructions\b|"
-    r"\b(?:system|assistant)\s*:|you are now|\bact as\b|\b(?:system )?prompt\b", re.I)
+    r"\b(?:system|assistant)\s*:|you are now|\bact as\b|\b(?:system )?prompt\b|\b(?:earlier|previous) messages\b", re.I)
 
 
 def _unsafe(s: str) -> bool:

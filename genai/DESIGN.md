@@ -34,6 +34,10 @@ clean reason can never make a template fail.
   (safe/secure/protected, refund, money back, guarantee, nothing to worry), or OTP/PIN outside the fixed line
   "Never share your OTP or PIN"; no decision-changing words; STEP_UP must ask to confirm/verify and not say
   paused/held/under review; HOLD must say paused/held/on hold/under review.
+- Word allowlist (model text only): every word in a model-written alert must come from the templates, this
+  payment's own reason words, or a short list of calm words (`CALM` in `validate.py`). A blocklist alone kept leaking
+  new phrasings in review ("read the code from your SMS to our agent"), so anything outside the list falls back.
+  A scam-pattern rule also blocks "send/transfer/pay/share ... to our/the/team/agent" built from allowed words.
 - Limits: this is pattern matching, not understanding. It is strict on purpose (a good model sentence that trips a
   rule just falls back to the template), but it cannot prove a text is harmless. That is why the template is the
   default and the model is optional. `tests/test_alerts.py` keeps every bypass found in review as a regression test.
