@@ -1,16 +1,22 @@
 from typing import List, Literal
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Txn(BaseModel):
-    txn_id: str
-    step: int
-    type: str
-    amount: float
-    nameOrig: str
+    """Request body for POST /score. Field names follow docs/API_CONTRACT.md exactly.
+    Bad input (missing field, negative amount, NaN/inf) is rejected with HTTP 422."""
+
+    model_config = ConfigDict(allow_inf_nan=False)
+
+    txn_id: str = Field(min_length=1, max_length=64)
+    step: int = Field(ge=0)
+    type: str = Field(min_length=1, max_length=32)
+    amount: float = Field(ge=0)
+    nameOrig: str = Field(min_length=1, max_length=64)
     oldbalanceOrg: float
     newbalanceOrig: float
-    nameDest: str
+    nameDest: str = Field(min_length=1, max_length=64)
     oldbalanceDest: float
     newbalanceDest: float
 

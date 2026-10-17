@@ -1,0 +1,4 @@
+# Only for running the backend tests: python -m pytest api/tests -q
+pytest
+skl2onnx
+scikit-learn
