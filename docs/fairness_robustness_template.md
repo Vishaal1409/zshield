@@ -58,7 +58,7 @@ Drift statistic between the two score distributions: PSI = [[NEEDS]] or KS = [[N
 | Zero and huge amounts handled | `test_zero_and_huge_amounts_are_handled` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 | Duplicate transaction ID is not re-scored | `test_duplicate_txn_id_returns_original_and_is_not_rescored` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 | GenAI timeout falls back to template | `test_alert_timeout_falls_back_to_template` in `api/tests/test_api.py` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
-| GenAI output validation and fallback (made-up details, numbers, promises, names) | `genai/tests/test_alerts.py`, rules in `genai/validate.py` (Arun) | [[NEEDS: pass/fail, test count from Arun]] |
+| GenAI output validation and fallback (made-up details, numbers, promises, names) | `genai/tests/test_alerts.py`, rules in `genai/validate.py` (Arun) | Pass (lead run, 17 Oct, 49 tests, offline) |
 | ONNX output matches the original model | `test_onnx_scorer_matches_sklearn` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 
 ## (f) How to read this

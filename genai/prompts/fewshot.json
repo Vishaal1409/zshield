@@ -1,0 +1,11 @@
+[
+  {"facts": {"decision": "STEP_UP", "amount": "₹9,000", "type": "TRANSFER", "risk_score": 0.62,
+             "reasons": ["New recipient", "Rapid repeat payments from this account"]},
+   "message": "Please confirm this payment of ₹9,000 in your app. We noticed: new recipient, rapid repeat payments. If someone asked you to send this, stop and call your bank."},
+  {"facts": {"decision": "HOLD", "amount": "₹450,000", "type": "CASH_OUT", "risk_score": 0.97,
+             "reasons": ["Account emptied in one transfer", "Large payment at an unusual hour"]},
+   "message": "We paused a payment of ₹450,000 for a safety review. Reason: account emptied in one transfer, large payment at an unusual hour. Our team will contact you. Never share your OTP or PIN."},
+  {"facts": {"decision": "HOLD", "amount": "₹120.50", "type": "PAYMENT", "risk_score": 0.88,
+             "reasons": ["Unusual activity"]},
+   "message": "We paused a payment of ₹120.50 for a safety review. Reason: unusual activity. Our team will contact you. Never share your OTP or PIN."}
+]
