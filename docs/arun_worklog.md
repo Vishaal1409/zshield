@@ -42,3 +42,27 @@ Source of truth: `ZShield_IBM_Z_Datathon_Team_Plan.docx` (read 17 Oct), then the
 
 ## Status log
 - Sat 17 Oct: read plan doc and repo, created branch and venv, `api/tests` 18 passed. Wave 1 launched.
+- Wave 1: C accepted (all cited files/tests exist), A accepted (all 5 stats re-fetched with curl and found
+  verbatim), B accepted after two lead fixes (watsonx chat params, timeout guard). Committed.
+- Wave 2: D accepted after lead fixes (verbatim problem line, audit-log wording, IBM Z wording, slide-1 overlap,
+  long abstract trim). Handoffs drafted.
+- Wave 3: E found 23 issues (1 blocker, 4 major). All fixed by the lead or D. Re-check: 20 resolved, 3 partly.
+  Second pass closed the last GenAI gap with a word allowlist (17 more bypasses now regression tests).
+  Still open: README.md "top reasons (SHAP)" in Vishaal's section (flagged in his handoff).
+- Final checks (lead): `genai/tests` 119 passed offline; `api/tests` 18 passed; 25,664-case template sweep, no
+  false rejections; no secrets or data files on the branch. Nothing pushed.
+
+## Task status (17 Oct, end of session)
+| # | Task | Status |
+|---|---|---|
+| t1 | Problem statement, personas (3), 5 cited stats | Done |
+| t2 | GenAI module design | Done (`genai/DESIGN.md`) |
+| t4 | `genai/explain.py` with fallback | Done (watsonx / openai_compat written and mocked, not run live) |
+| t5 | Tests pass, handoff to Abhinava | Done (handoff drafted, not sent) |
+| t6 | Responsible-AI checklist, copy to Armaan | Done (handoff drafted, not sent) |
+| t7 | 10-slide storyline | Done |
+| t8 | Deck draft | Partly: structure done; charts, screenshots, IBM Z evidence pending from teammates |
+| t9 | Demo and video script | Done; depends on Armaan's dashboard pages |
+| t10 | Abstract | Drafted; Vishaal to confirm if required and the word limit |
+| t11 | Fairness and robustness text | Partly: template and limits done; Joshua's numbers pending |
+| t12 | Proofread | Done once (E, two passes); repeat Sunday evening after teammates' numbers land |
