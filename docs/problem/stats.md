@@ -2,14 +2,14 @@
 
 All pages were opened on 2026-10-17 (access date). Quotes are copied from the page text. Units are as the source states them.
 
-Note on how pages were opened: pib.gov.in and mha.gov.in returned 403 to the WebFetch tool, so these were fetched with `curl` and the text read directly. The RBI Trend and Progress PDF was behind a human-verification page and was not used. Lead re-check (17 Oct 2026): every figure and quote below was re-fetched with curl and found verbatim on its page, including the PIB and MHA pages and the MHA PDF. The release date of the RBI Annual Report (29 May 2025) is not printed on the web page itself; confirm it from the RBI press release before quoting the date.
+Note on how pages were opened: pib.gov.in and mha.gov.in returned 403 to the WebFetch tool, so these were fetched with `curl` and the text read directly. The RBI Trend and Progress PDF was behind a human-verification page and was not used. Lead re-check (17 Oct 2026): every figure and quote below was re-fetched with curl and found verbatim on its page, including the PIB and MHA pages and the MHA PDF. The RBI Annual Report page shows "Date : May 29, 2025".
 
 ---
 
 ## Stat 1: RBI, bank fraud cases, card/internet category
 
 - **Figure.** Card/Internet frauds, 2024-25: 13,516 cases (56.5% of all frauds by number), amount involved ₹520 crore (1.4% of amount). In 2023-24: 29,082 cases (80.6%), ₹1,457 crore (11.9%).
-- **Exact quote.** "Frauds have occurred predominantly in the category of digital payments (card/internet) in terms of number and primarily in the loan portfolio (advances) in terms of value (Table VI.3)." Table VI.3 row: "Card/Internet 6,699 278 29,082 1,457 13,516 520 (49.7) (1.5) (80.6) (11.9) (56.5) (1.4)" (columns: 2022-23, 2023-24, 2024-25; number, then amount in ₹ crore). Total row: "13,494 18,981 36,060 12,230 23,953 36,014".
+- **Exact quote.** "Frauds have occurred predominantly in the category of digital payments (card/internet) in terms of number and primarily in the loan portfolio (advances) in terms of value (Table VI.3)." Table VI.3 row (table text, reformatted): "Card/Internet 6,699 278 29,082 1,457 13,516 520 (49.7) (1.5) (80.6) (11.9) (56.5) (1.4)" (columns: 2022-23, 2023-24, 2024-25; number, then amount in ₹ crore). Total row: "13,494 18,981 36,060 12,230 23,953 36,014".
 - **Publisher / report.** Reserve Bank of India, Annual Report 2024-25, Chapter VI "Regulation, Supervision and Financial Stability", paragraph VI.61, Tables VI.2 and VI.3.
 - **Published.** 29 May 2025.
 - **URL.** https://rbi.org.in/scripts/AnnualReportPublications.aspx?Id=1436
@@ -36,8 +36,8 @@ Note on how pages were opened: pib.gov.in and mha.gov.in returned 403 to the Web
 - **Published.** Answered 2 Dec 2025.
 - **URL.** https://www.mha.gov.in/MHA1/Par2017/pdfs/par2025-pdfs/LS02122025/432.pdf
 - **Accessed.** 2026-10-17
-- **Use in deck.** Shows the three-fold jump from 2023 to 2024 in reported amounts.
-- **Note.** A PIB release of 2 Apr 2025 (https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2117716&reg=48&lang=2, Release ID 2117716) says: "total number of complaints on NCRP and amount lost were 19.18 lakh and 22811.95 crore respectively in 2024." This is a different cut of the data (complaints vs incidents). Do not mix the two numbers on one slide.
+- **Use in deck.** Shows how fast reported amounts grew from 2023 to 2024 (about three times; that ratio is our arithmetic, not a source statement).
+- **Note.** A PIB release of 2 Apr 2025 by the Ministry of Communications, citing I4C (https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2117716&reg=48&lang=2, Release ID 2117716) says: "total number of complaints on NCRP and amount lost were 19.18 lakh and 22811.95 crore respectively in 2024." This is a different cut of the data (complaints vs incidents). Do not mix the two numbers on one slide.
 
 ## Stat 4: PIB / MHA, five-year complaints, amount reported, and amount saved
 

@@ -58,10 +58,10 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 
 **Headline:** Three stories show the system working: a drain is held, a burst is flagged, a normal day flows.
 **Bullets:**
-- Scam Drain: at 2 AM the whole balance goes to a brand-new recipient. Result: HOLD.
+- Scam Drain: at 2 AM the whole balance goes to a brand-new recipient. Result: HOLD. The analyst clicks Block.
 - Mule Burst: one destination receives many transfers fast. Result: flagged.
-- Normal Day: hundreds of honest payments pass in milliseconds. Then the analyst clicks Block.
-**Small:** Scam Drain alert text, as produced by the code: "We paused a payment of ₹9,000 for a safety review. Reason: account emptied in one transfer, large payment at an unusual hour, new recipient. Our team will contact you. Never share your OTP or PIN."
+- Normal Day: hundreds of honest payments pass in milliseconds.
+**Small:** Example alert text (example; the live amount comes from the demo story): "We paused a payment of ₹9,000 for a safety review. Reason: account emptied in one transfer, new recipient, large payment at an unusual hour. Our team will contact you. Never share your OTP or PIN."
 **Box:** PLACEHOLDER: dashboard screenshots, Live Feed and Alert Detail with the Scam Drain HOLD (Armaan, by 4 PM)
 **Visual:** Two screenshots: Live Feed during Normal Day, and Alert Detail for the held Scam Drain payment with the Block button.
 **Supplier:** Armaan (docs/screenshots/)
@@ -73,9 +73,9 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 
 **Headline:** One short path from payment to decision, with every step logged.
 **Bullets:**
-- Stream, then POST /score, live features, ONNX model, decision engine.
+- Stream, then POST /score, live features, ONNX model (placeholder rule until Joshua's model lands), decision engine.
 - Flagged payments get reasons and an alert. Every decision goes to an audit log, then the dashboard.
-- If any step fails, the result is STEP_UP and the error is stored.
+- If scoring fails, the result is STEP_UP and the error is stored.
 **Small:** The backend latency measured so far is from a placeholder rule scorer, not the real model.
 **Box:** PLACEHOLDER: architecture diagram, stream to dashboard, with the GenAI step and fail-safe marked (Vishaal, by 4 PM)
 **Visual:** Block diagram: stream, FastAPI /score, live features, ONNX model, decision engine, audit log (SQLite), dashboard (Streamlit). GenAI alert branch off the decision engine.
@@ -86,16 +86,16 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 
 ## Slide 6: Why IBM Z
 
-**Headline:** ZShield is designed for IBM Z and deployable on LinuxONE, next to where payments already run.
+**Headline:** ZShield is designed for IBM Z and deployable on LinuxONE, next to where many banks already run core payments.
 **Bullets:**
-- Core payments already run on IBM Z. Scoring next to the transaction avoids moving sensitive data across networks.
-- Low, predictable latency matters before settlement. Telum-class processors include on-chip AI acceleration for in-transaction inference. ZShield is designed to use it.
-- ONNX keeps the model portable to s390x. IBM Z security and reliability match our responsible-AI design.
-**Small:** Scale: UPI recorded 2,366 crore transactions in July 2026 (PIB, key statistics attributed to NPCI). This is context, not a benchmark of ours.
+- Many banks run core payment systems on IBM Z. Scoring next to the transaction avoids moving sensitive data across networks.
+- IBM Telum processors include an on-chip AI accelerator for in-transaction inference. Because our model is ONNX, it could be compiled for it (for example with the IBM Z Deep Learning Compiler). Not tested.
+- ONNX is a portable format; on s390x it needs ONNX Runtime built for s390x or the IBM Z Deep Learning Compiler (Vishaal to confirm).
+**Small:** Low, predictable latency matters before settlement, and IBM Z security and reliability match our responsible-AI design. Scale: UPI recorded 2,366 crore transactions in July 2026 (PIB, key statistics attributed to NPCI). This is context, not a benchmark of ours.
 **Box:** PLACEHOLDER: [[NEEDS: Vishaal: what actually ran on LinuxONE, with screenshot]]
 **Visual:** Screenshot of /health and a /score call on LinuxONE, plus one line stating exactly what ran. If nothing ran, keep the "designed for / deployable on" wording and say so.
 **Supplier:** Vishaal
-**Notes:** Use "designed for" and "deployable on". Do not say we used the on-chip accelerator unless Vishaal confirms it. If LinuxONE ran the API, say exactly that and show the screenshot.
+**Notes:** Use "designed for" and "deployable on". Do not say we used or tested the on-chip accelerator or the compiler unless Vishaal confirms it. If LinuxONE ran the API, say exactly that and show the screenshot.
 
 ---
 
@@ -106,7 +106,7 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 - PaySim synthetic payments (Kaggle). No real personal data. Split by time (step), no leakage.
 - Class weights for rare fraud. Metrics: PR-AUC and recall at a fixed false-positive rate. No accuracy.
 - Logistic regression baseline. Thresholds set by cost: a missed fraud costs more than an extra check.
-**Small:** PaySim is synthetic and relatively easy, so real-world performance is unknown.
+**Small:** Method as planned; results on slide 8. PaySim is synthetic and relatively easy, so real-world performance is unknown.
 **Box:** PLACEHOLDER: EDA chart, fraud by type and over time (Balaa, docs/eda/, by 4 PM)
 **Visual:** One EDA chart that shows how rare fraud is and which transaction types carry it.
 **Supplier:** Balaa
@@ -122,9 +122,9 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 - Recall at fixed FPR: [[NEEDS: recall at fixed FPR from Joshua]]. Confusion matrix and SHAP summary: [[NEEDS: charts from Joshua]].
 - Latency: p95 [[NEEDS: p95 latency on LinuxONE from Vishaal/Abhinava]].
 **Small:** Honest note: the backend latency measured so far comes from a placeholder rule scorer on x86, not the real model and not IBM Z. We do not quote it as a result.
-**Box:** PLACEHOLDER: PR curve, model vs baseline; confusion matrix; SHAP summary; latency table (Joshua, by 4 PM)
+**Box:** PLACEHOLDER: PR curve, model vs baseline; confusion matrix; SHAP summary; latency table (charts: Joshua; latency table: Abhinava / Vishaal; by 4 PM)
 **Visual:** Four items: PR curve against the baseline, confusion matrix, SHAP summary, latency table labelled with the machine.
-**Supplier:** Joshua (charts), Abhinava and Vishaal (latency table)
+**Supplier:** Joshua (charts), Abhinava / Vishaal (latency table)
 **Notes:** Fill every number from a real run and label the machine. If the real model is not in by the deadline, say so on this slide. Never show the placeholder scorer's numbers as model results.
 
 ---
@@ -149,9 +149,9 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 **Headline:** Stopping a payment before settlement is the point where a scam can still be undone.
 **Bullets:**
 - In our demo run, value intercepted: [[NEEDS: value intercepted from demo run]]. It excludes payments an analyst approved.
-- After-the-fact freezing helps: more than ₹11,158 crore saved in more than 32.80 lakh complaints (till 30.06.2026). ZShield acts earlier.
+- Reporting after the fact still saves some money: more than ₹11,158 crore saved in more than 32.80 lakh complaints (till 30.06.2026). ZShield acts earlier.
 - Next: real model on LinuxONE, SHAP reasons, pilot with real review queues, drift monitoring.
-**Small:** Source: PIB, MHA, "National Cyber Crime Data", 21 Jul 2026. "Saved" and "reported" cover different periods. We do not compute a recovery rate.
+**Small:** Source: PIB, MHA, "National Cyber Crime Data", 21 Jul 2026. "Saved" covers complaints till 30.06.2026; we do not compute a recovery rate.
 **Box:** PLACEHOLDER: impact panel, demo-run counts and value intercepted from /stats (Armaan, by 4 PM)
 **Visual:** Dashboard Impact page screenshot.
 **Supplier:** Armaan
@@ -174,11 +174,10 @@ Rules for this deck: only the verified stats in `docs/problem/stats.md`; no mode
 - [ ] Recall at fixed FPR: Joshua
 - [ ] PR curve, confusion matrix, SHAP summary charts: Joshua
 - [ ] Fairness numbers by type and amount band: Joshua (band definitions: Balaa)
-- [ ] p95 latency on LinuxONE (and the machine label): Vishaal / Abhinava
+- [ ] p95 latency table on LinuxONE (and the machine label): Abhinava / Vishaal
 - [ ] What actually ran on LinuxONE, with screenshot: Vishaal
 - [ ] Architecture diagram: Vishaal
 - [ ] EDA chart in docs/eda/: Balaa
 - [ ] Dashboard screenshots in docs/screenshots/ (Live Feed, Alert Detail, Impact): Armaan
 - [ ] Value intercepted from the demo run: Armaan / Abhinava (from /stats after the real run)
 - [ ] Stat card, persona cards, routing graphic, responsible-AI graphic: Arun
-- [ ] Confirm the release date of the RBI Annual Report if Stat 1 is ever quoted: Vishaal

@@ -15,11 +15,13 @@ How to call:
 
 One small ask: in `api/main.py` line 128 you pass only decision, amount and reasons. Please also add `"txn_id": txn.txn_id, "type": data["type"], "risk_score": s`, so the summary shows type and score and fallback logs carry the txn id.
 
-Fallback: the default is `GENAI_PROVIDER=template`, which needs no keys or network. If we switch on watsonx or openai_compat, any timeout (GENAI_TIMEOUT_S, default 2 s), error or failed output check returns the template text and logs a warning on `zshield.genai`. Neither function ever raises.
+Fallback: the default is `GENAI_PROVIDER=template`, which needs no keys or network. If we switch on watsonx or openai_compat, any timeout (GENAI_TIMEOUT_S, default 1.5 s, so it finishes inside your 2 s guard), error or failed output check returns the template text and logs a warning on `zshield.genai`. Neither function ever raises.
 
 Optional, needs Vishaal's OK since it changes the contract: add `analyst_summary` as an extra field on `/alerts` for the Alert Detail page.
 
-Tests: `python -m pytest genai/tests -q` (49 pass, offline). Details are in `genai/README.md`.
+Tests: `python -m pytest genai/tests -q` (91 pass, offline). Details are in `genai/README.md`.
+
+Small suggestion for api/tests: set `GENAI_PROVIDER=template` in a conftest, so a dev shell with a model configured never makes the API tests call the network.
 
 ---
 
@@ -36,7 +38,7 @@ Responsible AI (Under the Hood page), 6 bullets, 42 words:
 - Every decision is logged. Limits stated openly.
 
 Alert copy (this is the exact text the code produces; amounts are synthetic PaySim values shown with ₹):
-- HOLD: "We paused a payment of ₹9,000 for a safety review. Reason: account emptied in one transfer, large payment at an unusual hour, new recipient. Our team will contact you. Never share your OTP or PIN."
+- HOLD: "We paused a payment of ₹9,000 for a safety review. Reason: account emptied in one transfer, new recipient, large payment at an unusual hour. Our team will contact you. Never share your OTP or PIN."
 - STEP_UP: "Please confirm this payment of ₹4,200 in your app. We noticed: new recipient, rapid repeat payments from this account. If someone asked you to send this, stop and call your bank."
 
 Please show `alert_text` from the API as it comes; don't retype it. Can you send me by 4 PM: screenshots of Live Feed, Alert Detail (the Scam Drain HOLD with the Block button) and Impact, saved to `docs/screenshots/`? The demo script is in `docs/deck/demo_script.md`, with a 60 s backup version for your backup clip.
@@ -47,13 +49,15 @@ Please show `alert_text` from the API as it comes; don't retype it. Can you send
 
 Hi Vishaal, the deck draft is in `docs/deck/ZShield_deck_draft.pptx` (storyline in `docs/deck/storyline.md`; rebuild with `python docs/deck/build_deck.py`).
 
-Can you review slide 6 (Why IBM Z)? It only says "designed for / deployable on" IBM Z / LinuxONE. It also says Telum-class processors include on-chip AI acceleration and that ZShield is "designed to use it". Please check that wording, and tell me exactly what ran on LinuxONE (with a screenshot and p95 latency), and I'll update it.
+Can you review slide 6 (Why IBM Z)? It only says "designed for / deployable on" IBM Z / LinuxONE. On Telum it says: the on-chip AI accelerator exists, and because our model is ONNX it could be compiled for it (for example with the IBM Z Deep Learning Compiler), not tested. Please check that wording, and tell me exactly what ran on LinuxONE (with a screenshot and p95 latency), and I'll update it.
+
+Please also check that onnxruntime installs on s390x. As far as we know PyPI has no s390x wheel, so we may need a source build or the IBM Z Deep Learning Compiler. Slide 6 says "Vishaal to confirm".
 
 Two questions:
 1. Does the portal require an abstract? If yes, what's the word limit? Drafts at about 100, 150 and 250 words are in `docs/abstract/abstract_draft.md`.
 2. The architecture diagram for slide 5: are you doing it, or should I?
 
-Also: I filled the two README sections marked for me (problem and responsible AI) on my branch.
+Also: I filled the two README sections marked for me (problem and responsible AI) on my branch. In your "What it does" section, "top reasons (SHAP)" is not true yet (reasons are rule-based until Joshua's explain_top3 lands). Maybe "top reasons (rule-based now, SHAP next)".
 
 ---
 
@@ -65,11 +69,12 @@ Charts I need by 4 PM for the deck:
 1. PR curve, model vs logistic regression baseline
 2. Confusion matrix (test split)
 3. SHAP summary plot
-4. Latency table (p50/p95/p99, with the machine named)
+
+(The latency table comes from Abhinava and Vishaal, not you.)
 
 Numbers too: PR-AUC (model and baseline), recall at your fixed FPR, and the two-sentence threshold logic.
 
-One format note for your reason strings (`explain_top3`): keep each one short (80 characters max), with no digits and none of the words approve, block, safe, refund or complete. Otherwise the GenAI safety filter swaps it for "Unusual activity". Example of a good one: "Account emptied in one transfer".
+One format note for your reason strings (`explain_top3`): they go straight into customer text, so the safety filter swaps a reason for "Unusual activity" if it has any digit or number word (except "one"), non-English characters, a URL or @, OTP/PIN, a name, or any of these words/stems: approv, blocked, cancel, declin, revers, reject, sent, released, completed, processed, paused, held, on hold, under review, refund, guarantee, safe/secure/protected, ignore, override, prompt. Over 80 characters gets cut. Good: "Account emptied in one transfer". Bad: "Amount 5x above usual" (digit).
 
 ---
 
@@ -81,7 +86,7 @@ Hi Balaa, for the deck I need these by 4 PM:
 3. Please confirm from the EDA whether fraud appears only in TRANSFER and CASH_OUT. The fairness template marks this as unconfirmed.
 4. Amount band edges for the fairness table (for example from quantiles); agree them with Joshua.
 
-Also, is `demo_stream.csv` and the three story files on track? The demo script depends on them.
+Also, are `demo_stream.csv` and the three story files on track? The demo script depends on them.
 
 ---
 
@@ -99,7 +104,7 @@ Verified stats (each re-checked on its source page on 17 Oct; full quotes in `do
 1. Opener: in 2025, 28 lakh digital payment frauds worth ₹22,931 crore were reported on NCRP. RBI says "the scope for timely intervention and recovery of funds becomes limited". (RBI Discussion Paper, 9 Apr 2026)
 2. More than ₹11,158 crore saved in more than 32.80 lakh complaints through CFCFRMS, till 30.06.2026. (PIB/MHA, 21 Jul 2026)
 3. UPI: 2,366 crore transactions in July 2026. (PIB, 24 Aug 2026, figures from NPCI)
-4. Card/internet frauds: 13,516 cases in 2024-25, 56.5% of all bank fraud cases by number. (RBI Annual Report 2024-25)
+4. Card/internet frauds: 13,516 cases in 2024-25, 56.5% of all bank fraud cases by number (frauds of ₹1 lakh and above, by date of reporting). (RBI Annual Report 2024-25)
 5. Cyber fraud amount reported: ₹22,845.73 crore in 2024, up from ₹7,465.18 crore in 2023. (MHA, Lok Sabha reply, 2 Dec 2025)
 
-Say "reported", not "lost". Different releases give different 2024 numbers, so never mix them on one slide.
+Say "reported", not "lost". Different releases give different 2024 numbers, so never mix them on one slide. Stats 4 and 5 are backup only; don't put them next to the opener.

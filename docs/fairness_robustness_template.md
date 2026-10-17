@@ -58,8 +58,8 @@ Drift statistic between the two score distributions: PSI = [[NEEDS]] or KS = [[N
 | Zero and huge amounts handled | `test_zero_and_huge_amounts_are_handled` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 | Duplicate transaction ID is not re-scored | `test_duplicate_txn_id_returns_original_and_is_not_rescored` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 | GenAI timeout falls back to template | `test_alert_timeout_falls_back_to_template` in `api/tests/test_api.py` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
-| GenAI output validation and fallback (made-up details, numbers, promises, names) | `genai/tests/test_alerts.py`, rules in `genai/validate.py` (Arun) | Pass (lead run, 17 Oct, 49 tests, offline) |
-| ONNX output matches the original model | `test_onnx_scorer_matches_sklearn` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
+| GenAI output validation and fallback (wrong amount, extra numbers, promises, names, decision wording, OTP/PIN requests) | `genai/tests/test_alerts.py`, rules in `genai/validate.py` and `genai/rules.py` (Arun) | Pass (lead run, 17 Oct, 91 tests, offline) |
+| ONNX loader returns the same probability as a stand-in sklearn model (not the fraud model) | `test_onnx_scorer_matches_sklearn` | Pass (lead run, 17 Oct, 18/18, placeholder scorer) |
 
 ## (f) How to read this
 False-positive rate is the share of normal payments we flag, which is friction for honest customers. Miss rate is the share of fraud we approve, which is lost money. A group with a much higher rate than the others is a warning sign, but check n and n_fraud first: with few fraud cases a rate can swing widely and means little. Gaps by type or amount may reflect real differences in the data rather than unfair treatment, so a gap is a reason to investigate, not proof either way. Lowering thresholds cuts misses and raises false positives; raising them does the opposite.

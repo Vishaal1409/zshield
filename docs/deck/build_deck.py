@@ -139,8 +139,13 @@ def build():
             warnings.append(f"slide {d['num']}: headline may be 3 lines")
         has_pl = d["num"] == 1
         body_h = 3.0 if has_pl else 3.9
-        bullets(s, d["bullets"], 0.6, 1.85, 6.9, body_h)
-        used = sum(est_lines("•  " + b, 20, 6.7) for b in d["bullets"]) * 0.34 + 0.15 * len(d["bullets"])
+        bsize = 20
+        def need(sz):
+            return sum(est_lines("\u2022  " + x, sz, 6.7) for x in d["bullets"]) * (sz / 60 + 0.01) + 0.15 * len(d["bullets"])
+        if need(20) > body_h:
+            bsize = 18
+        used = need(bsize)
+        bullets(s, d["bullets"], 0.6, 1.85, 6.9, body_h, size=bsize)
         if used > body_h:
             warnings.append(f"slide {d['num']}: bullets may overflow ({used:.1f} in > {body_h})")
         placeholder(s, d["box"], 7.8, 1.9, 5.0, 2.8 if has_pl else 3.6)
@@ -171,6 +176,8 @@ def build():
         r = p.add_run(); r.text = "•  " + src
         r.font.name, r.font.size, r.font.color.rgb = FONT, Pt(13), DARK
     s.notes_slide.notes_text_frame.text = "Appendix. All figures are from docs/problem/stats.md, quoted with their source."
+    prs.core_properties.author = "ZShield team"
+    prs.core_properties.title = "ZShield deck draft"
     prs.save(OUT)
     print("saved", OUT)
     for w in warnings:
