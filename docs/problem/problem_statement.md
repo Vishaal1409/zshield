@@ -19,8 +19,8 @@ Source for the quote: RBI, "Discussion Paper - Exploring safeguards in digital p
 
 ## What ZShield does
 
-- Scores each payment in milliseconds (FastAPI; a boosted-tree model exported to ONNX is planned, a placeholder rule scores today).
+- Scores each payment in milliseconds (FastAPI service; p95 3.2 ms in a laptop load test).
 - Routes it to APPROVE, STEP_UP or HOLD before settlement.
-- Gives the top 3 reasons (rule-based today; SHAP when the model lands) and a short plain-language alert for flagged payments.
+- Gives up to 3 plain reasons and a short, checked customer alert for flagged payments.
 - Keeps the analyst in control: the AI explains, a human decides.
-- Designed for, and deployable on, IBM Z / LinuxONE.
+- Designed for IBM Z / LinuxONE.

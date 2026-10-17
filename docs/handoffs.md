@@ -49,15 +49,15 @@ Please show `alert_text` from the API as it comes; don't retype it. Can you send
 
 Hi Vishaal, the deck draft is in `docs/deck/ZShield_deck_draft.pptx` (storyline in `docs/deck/storyline.md`; rebuild with `python docs/deck/build_deck.py`).
 
-Can you review slide 6 (Why IBM Z)? It only says "designed for / deployable on" IBM Z / LinuxONE. On Telum it says: the on-chip AI accelerator exists, and because our model is ONNX it could be compiled for it (for example with the IBM Z Deep Learning Compiler), not tested. Please check that wording, and tell me exactly what ran on LinuxONE (with a screenshot and p95 latency), and I'll update it.
+The deck only states what is built and measured today. Anything still in progress (the trained model, SHAP, LinuxONE, the dashboard pages) is left out and listed in `docs/TODO.md`, with the text to add once it's done.
 
-Please also check that onnxruntime installs on s390x. As far as we know PyPI has no s390x wheel, so we may need a source build or the IBM Z Deep Learning Compiler. Slide 6 says "Vishaal to confirm".
+Slide 6 (Why IBM Z) now says only "designed for IBM Z / LinuxONE", with a laptop latency figure labelled as a laptop figure. When something runs on LinuxONE, please send me exactly what ran, a screenshot and the p95 latency, and I'll add it. Please also check whether onnxruntime installs on s390x. As far as we know PyPI has no s390x wheel, so it may need a source build or the IBM Z Deep Learning Compiler.
 
 Two questions:
 1. Does the portal require an abstract? If yes, what's the word limit? Drafts at about 100, 150 and 250 words are in `docs/abstract/abstract_draft.md`.
-2. The architecture diagram for slide 5: are you doing it, or should I?
+2. Slide 5 needs an architecture diagram of what is built. I can draw it unless you already have one.
 
-Also: I filled the two README sections marked for me (problem and responsible AI) on my branch. In your "What it does" section, "top reasons (SHAP)" is not true yet (reasons are rule-based until Joshua's explain_top3 lands). Maybe "top reasons (rule-based now, SHAP next)".
+Also: I filled the two README sections marked for me (problem and responsible AI) on my branch. In your "What it does" section, "top reasons (SHAP)" is not true yet: the reasons are rule-based. Maybe "top reasons" until SHAP is wired in.
 
 ---
 

@@ -56,7 +56,7 @@ pip install -r requirements-train.txt
 TODO (Vishaal): what we actually ran on Z, with screenshots. Be exact, do not overclaim.
 
 ## Responsible AI
-See the [responsible AI checklist](docs/responsible_ai.md) and the [fairness and robustness template](docs/fairness_robustness_template.md). The GenAI alert layer only rephrases supplied facts and never changes a decision: [genai/DESIGN.md](genai/DESIGN.md).
+See the [responsible AI checklist](docs/responsible_ai.md). The GenAI alert layer only rephrases supplied facts and never changes a decision: [genai/DESIGN.md](genai/DESIGN.md).
 
 ## Data
 Synthetic transactions (PaySim). No real personal data. See features/data_card.md.

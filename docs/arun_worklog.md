@@ -66,3 +66,12 @@ Source of truth: `ZShield_IBM_Z_Datathon_Team_Plan.docx` (read 17 Oct), then the
 | t10 | Abstract | Drafted; Vishaal to confirm if required and the word limit |
 | t11 | Fairness and robustness text | Partly: template and limits done; Joshua's numbers pending |
 | t12 | Proofread | Done once (E, two passes); repeat Sunday evening after teammates' numbers land |
+
+## Sun 18 Oct: done-only pass
+- Arun asked to remove all text about unfinished work and keep it in a TODO. The deck, script, abstract, problem
+  statement, personas, responsible-AI page and README now state only what is built or measured. Everything
+  removed is in `docs/TODO.md` (13 items, with owner, done-when, where and the text to paste).
+- New measurements (lead, laptop Intel i7 x86, rule-based scorer): load test in `docs/deck/measured_17oct.md`
+  (p95 3.23 ms end to end, 375/s at 1 client, 718/s at 8); sample replay of `docs/samples/sample_stream.csv`
+  (252 payments: 245 APPROVE, 5 STEP_UP, 2 HOLD; T240 ₹48,000 held; BLOCK via POST /analyst_action shows in /alerts).
+- Demo script rewritten around what runs today: producer replay, one-page dashboard, `/docs` page for Block.

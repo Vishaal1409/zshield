@@ -12,7 +12,7 @@
 
 **Pain point.** The queue is full of false alerts. Each alert shows a score but little reason, so every case needs manual digging. Real cases wait behind noise.
 
-**What ZShield changes.** Only the riskiest payments reach her as HOLD. Each one comes with the top 3 reasons (rule-based today; SHAP when the model lands) and a short plain-language alert. She can approve, block or escalate (API built; dashboard buttons pending), and her action is logged. The AI explains; she decides.
+**What ZShield changes.** Only the riskiest payments reach her as HOLD. Each one comes with up to 3 plain reasons and a short plain-language alert. She can approve, block or escalate each held payment, and her action is logged. The AI explains; she decides.
 
 > "I don't need a number. I need to know why this one is different." (illustrative quote, not a real person)
 
