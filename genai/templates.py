@@ -1,6 +1,5 @@
 """Deterministic wording. Also the fallback whenever a model is missing, slow or fails validation."""
-import os
-
+from .rules import currency
 from .sanitize import FALLBACK_REASON, clean_facts
 
 MAX_WORDS = 40
@@ -11,14 +10,14 @@ LAST_RESORT = {
     "STEP_UP": "Please confirm this payment in your app. If someone asked you to send this, stop and call your bank.",
     "HOLD": "We paused a payment for a safety review. Our team will contact you. Never share your OTP or PIN.",
 }
+SUMMARY_LAST_RESORT = {
+    "HOLD": "Payment held for review.\nFlagged because: Unusual activity.\nAction: review the case and choose Approve, Block or Escalate.",
+    "STEP_UP": "Extra check requested.\nFlagged because: Unusual activity.\nAction: confirm the customer verification result, then release or stop the payment.",
+}
 ACTION = {
     "HOLD": "Action: review the case and choose Approve, Block or Escalate.",
     "STEP_UP": "Action: confirm the customer verification result, then release or stop the payment.",
 }
-
-
-def currency() -> str:
-    return os.environ.get("GENAI_CURRENCY", "₹")
 
 
 def fmt_amount(amount) -> str:
@@ -62,8 +61,8 @@ def summary_for(f: dict) -> str:
     if d not in ACTION:
         return ""
     head = "Payment held for review" if d == "HOLD" else "Extra check requested"
-    bits = [b for b in (f["type"], f"of {fmt_amount(f['amount'])}" if f["amount"] is not None else "") if b]
-    l1 = f"{head}: {' '.join(bits) or 'payment'}"
+    bits = [f["type"] or "payment"] + ([f"of {fmt_amount(f['amount'])}"] if f["amount"] is not None else [])
+    l1 = f"{head}: {' '.join(bits)}"
     if f["risk_score"] is not None:
         l1 += f", risk score {f['risk_score']:.2f}"
     l2 = "Flagged because: " + "; ".join(f["reasons"] or [FALLBACK_REASON]) + "."

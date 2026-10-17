@@ -2,17 +2,22 @@
 import math
 import re
 
+from .rules import HOLD_WORDS, ID_RE, forbidden
+
 DECISIONS = ("APPROVE", "STEP_UP", "HOLD")
 TYPES = ("PAYMENT", "TRANSFER", "CASH_OUT", "CASH_IN", "DEBIT")   # PaySim transaction types
 FALLBACK_REASON = "Unusual activity"
-ID_RE = re.compile(r"[CM]\d{5,}")
 CTRL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]+")
 STRIP_RE = re.compile(r"[<>{}\[\]`]")
-# Injection / promise / decision-changing text inside a reason: the whole reason is replaced.
-BAD_REASON_RE = re.compile(
-    r"ignore|disregard|forget|instruction|prompt|system\s*:|assistant\s*:|user\s*:|you are now|act as|pretend|"
-    r"override|https?:|www\.|\.com\b|@|approv|block|refund|guarant|no risk|\bsafe\b|complet|released?\b",
-    re.I)
+# Injection text inside a reason: the whole reason is replaced. Promise, name, URL, decision and other
+# customer-text rules come from rules.forbidden, the same check the validator runs on the output.
+INJECTION_RE = re.compile(
+    r"\b(?:ignore|disregard|forget|override|pretend)\b|\b(?:previous|new|above) instructions\b|"
+    r"\b(?:system|assistant)\s*:|you are now|\bact as\b|\b(?:system )?prompt\b", re.I)
+
+
+def _unsafe(s: str) -> bool:
+    return bool(INJECTION_RE.search(s) or forbidden(s) or HOLD_WORDS.search(s) or re.search(r"\d", s))
 
 
 def clean_reasons(reasons, limit: int = 80) -> list:
@@ -29,9 +34,9 @@ def clean_reasons(reasons, limit: int = 80) -> list:
             s = " ".join(STRIP_RE.sub(" ", CTRL_RE.sub(" ", str(r)[:500])).split())
             if not s:
                 continue
-            bad = BAD_REASON_RE.search(s)
+            bad = _unsafe(s)
             s = ID_RE.sub("", s).strip()
-            if bad or not s or re.search(r"\d", s):
+            if bad or not s:
                 s = FALLBACK_REASON
             s = s[:limit].rstrip(" ,.;:-")
             if s and s not in out:
@@ -48,7 +53,7 @@ def _num(v):
         return None
     try:
         f = float(v)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return f if math.isfinite(f) else None
 
@@ -62,7 +67,7 @@ def clean_facts(facts) -> dict:
     t = str(f.get("type", "")).strip().upper()
     return {
         "decision": d if d in DECISIONS else "",
-        "amount": amt if amt is not None and amt >= 0 else None,
+        "amount": round(amt, 2) if amt is not None and amt >= 0 else None,   # cents, as displayed
         "type": t if t in TYPES else None,
         "risk_score": min(max(rs, 0.0), 1.0) if rs is not None else None,
         "reasons": clean_reasons(f.get("reasons")),

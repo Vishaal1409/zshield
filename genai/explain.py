@@ -10,7 +10,7 @@ import threading
 from pathlib import Path
 
 from .sanitize import clean_facts
-from .templates import LAST_RESORT, alert_for, fmt_amount, summary_for
+from .templates import LAST_RESORT, SUMMARY_LAST_RESORT, alert_for, fmt_amount, summary_for
 from .validate import validate_alert, validate_summary
 
 log = logging.getLogger("zshield.genai")
@@ -63,9 +63,9 @@ def build_prompt(f: dict) -> tuple:
 
 def _timeout() -> float:
     try:
-        return max(0.05, float(os.environ.get("GENAI_TIMEOUT_S", "2.0")))
+        return max(0.05, float(os.environ.get("GENAI_TIMEOUT_S", "1.5")))
     except ValueError:
-        return 2.0
+        return 1.5
 
 
 def _call_openai_compat(system: str, user: str, timeout: float) -> str:
@@ -84,8 +84,11 @@ def _call_openai_compat(system: str, user: str, timeout: float) -> str:
         return json.load(r)["choices"][0]["message"]["content"]
 
 
+_WX = {}   # cached watsonx client, so the IAM token is not fetched on every call
+
+
 def _call_watsonx(system: str, user: str, timeout: float) -> str:
-    """IBM watsonx.ai with a Granite instruct model (greedy decoding, short output)."""
+    """IBM watsonx.ai with a Granite instruct model (temperature 0, short output)."""
     env = os.environ
     if not (env.get("WATSONX_URL") and env.get("WATSONX_APIKEY") and env.get("WATSONX_PROJECT_ID")):
         raise ProviderUnavailable("WATSONX_URL / WATSONX_APIKEY / WATSONX_PROJECT_ID not set")
@@ -94,9 +97,12 @@ def _call_watsonx(system: str, user: str, timeout: float) -> str:
         from ibm_watsonx_ai.foundation_models import ModelInference
     except ImportError as e:
         raise ProviderUnavailable("ibm-watsonx-ai not installed") from e
-    model = ModelInference(model_id=env.get("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct"),
-                           credentials=Credentials(url=env["WATSONX_URL"], api_key=env["WATSONX_APIKEY"]),
-                           project_id=env["WATSONX_PROJECT_ID"])
+    key = (env["WATSONX_URL"], env["WATSONX_PROJECT_ID"], env.get("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct"))
+    if key not in _WX:
+        _WX.clear()
+        _WX[key] = ModelInference(model_id=key[2], project_id=key[1],
+                                  credentials=Credentials(url=key[0], api_key=env["WATSONX_APIKEY"]))
+    model = _WX[key]
     resp = model.chat(messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
                       params={"temperature": 0, "max_tokens": 100})
     return resp["choices"][0]["message"]["content"]
@@ -174,9 +180,10 @@ def analyst_summary(facts: dict) -> str:
     """Exactly 3 lines (what happened / why flagged / action) for STEP_UP and HOLD, else ''. Deterministic."""
     try:
         f = clean_facts(facts)
-        text = summary_for(f)
-        if text and not validate_summary(text, f)[0]:
-            return summary_for({**f, "reasons": [], "type": None})
-        return text
+        for candidate in (f, {**f, "reasons": [], "type": None}):
+            text = summary_for(candidate)
+            if not text or validate_summary(text, f)[0]:
+                return text
+        return SUMMARY_LAST_RESORT[f["decision"]]
     except Exception:
         return ""

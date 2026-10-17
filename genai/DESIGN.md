@@ -17,24 +17,32 @@ The GenAI never makes or changes a decision; it only rephrases supplied facts.
 - `template_alert(facts)`: the deterministic alert. All functions never raise.
 
 ## Rules
-- Reasons are sanitized before any use: coerced to str, control chars and `<>{}[]` removed, ids `[CM]\d{5,}` removed,
-  capped at 80 chars, max 3, empties and duplicates dropped. A reason containing injection text ("ignore...",
-  "system:", "you are now", URLs, emails), decision/promise words (approved, blocked, refund, guarantee, safe) or any
-  digit is replaced by "Unusual activity". So reasons can never add numbers or ids.
-- Canonical amount: currency symbol + western grouping, decimals only when needed (`₹9,000`, `₹9,000.50`).
-  The validator accepts any grouping of the SAME value (`9000`, `9,000.00`, `1,00,000`) and rejects other values.
+Shared word lists live in `rules.py`. The reason sanitizer and the output validator use the same lists, so a
+clean reason can never make a template fail.
+- Reasons are sanitized before any use: coerced to str, control chars and `<>{}[]` removed, capped at 80 chars,
+  max 3, empties and duplicates dropped. A reason is replaced by "Unusual activity" if it contains: injection text
+  ("ignore", "previous instructions", "system:", "you are now", "prompt"), any digit or number word (except "one"),
+  any non-ASCII or invisible character (look-alike letters, zero-width spaces), an account id, a URL or email, a promise,
+  a name, OTP/PIN, or a decision word (approv-, blocked, cancel, declin-, revers-, sent, released, completed,
+  processed, paused, held, on hold, under review).
+- Amount: currency symbol + western grouping, decimals only when needed (`₹9,000`, `₹9,000.50`), rounded to cents.
+  The validator requires that exact string (or the same value in Indian grouping, `₹1,00,000`).
   PaySim amounts are synthetic units shown with ₹ for the demo only; set `GENAI_CURRENCY` to change the symbol.
-- Validator (`validate.py`): at most 40 words; amount present and equal; no number except the amount and the risk
-  score (`0.97` or `97%`); no account ids; decision wording matches (STEP_UP must ask to confirm/verify and not say
-  paused/held/blocked; HOLD must say paused/on hold/under review and not say approved/completed); no promises
-  (money is safe, refund, guarantee, no risk); no names (honorific + capitalised word, "Dear <Name>", small denylist;
-  deliberately simple, not real name recognition); no URLs or emails.
+- Validator (`validate.py`): at most 40 words and 300 characters, one line; the amount as above; no other number
+  except the risk score written as `0.97` or `97%`; no number words; no non-ASCII/invisible characters; no account ids,
+  URLs, names (honorific or greeting + capitalised word, small denylist incl. the demo persona names), promises
+  (safe/secure/protected, refund, money back, guarantee, nothing to worry), or OTP/PIN outside the fixed line
+  "Never share your OTP or PIN"; no decision-changing words; STEP_UP must ask to confirm/verify and not say
+  paused/held/under review; HOLD must say paused/held/on hold/under review.
+- Limits: this is pattern matching, not understanding. It is strict on purpose (a good model sentence that trips a
+  rule just falls back to the template), but it cannot prove a text is harmless. That is why the template is the
+  default and the model is optional. `tests/test_alerts.py` keeps every bypass found in review as a regression test.
 
 ## Providers (`GENAI_PROVIDER`, read at call time)
 - `template` (default): no keys, no network.
 - `watsonx`: `ibm-watsonx-ai` SDK imported lazily; env `WATSONX_URL`, `WATSONX_APIKEY`, `WATSONX_PROJECT_ID`,
   `WATSONX_MODEL_ID` (default `ibm/granite-3-8b-instruct`; check the exact id against the models available in the
-  project). Chat API, `temperature=0`, `max_tokens=100`. Not exercised live in tests.
+  project). Chat API, `temperature=0`, `max_tokens=100`; the client is cached between calls. Not exercised live in tests.
 - `openai_compat`: any OpenAI-style `/chat/completions` endpoint via stdlib `urllib` (e.g. Ollama with a local Granite
   model at `http://localhost:11434/v1`). Env `GENAI_BASE_URL`, `GENAI_MODEL`, optional `GENAI_API_KEY`. Temperature 0.
 - Prompts live in `prompts/system.md` and `prompts/fewshot.json`, loaded per call with built-in defaults if missing.
@@ -42,7 +50,7 @@ The GenAI never makes or changes a decision; it only rephrases supplied facts.
 
 ## Failure behaviour
 ```
-facts -> sanitize/minimise -> provider (timeout GENAI_TIMEOUT_S, default 2.0 s, thread guard)
+facts -> sanitize/minimise -> provider (timeout GENAI_TIMEOUT_S, default 1.5 s, under the API's 2 s guard)
       -> validate -> ok: model text
                   -> else: template text + warning log (reason only)
 template text fails validation (should not happen) -> fixed safe message per decision
