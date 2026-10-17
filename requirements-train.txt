@@ -1,0 +1,14 @@
+# Training, EDA, explainability. Run on laptops / Colab, not required on IBM Z.
+pandas
+numpy
+scikit-learn
+xgboost
+lightgbm
+shap
+onnx
+onnxmltools
+skl2onnx
+onnxruntime
+matplotlib
+pyarrow
+jupyter

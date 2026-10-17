@@ -1,0 +1,28 @@
+# Data (share via Google Drive, never commit)
+data/*
+!data/README.md
+*.parquet
+*.csv
+!docs/**/*.csv
+
+# Secrets
+.env
+*.key
+secrets.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Local databases and logs
+*.db
+*.sqlite
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

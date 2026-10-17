@@ -1,0 +1,7 @@
+# Minimal set for the scoring API. This is what must install on IBM Z / LinuxONE (s390x).
+fastapi
+uvicorn
+pydantic
+numpy
+onnxruntime
+httpx
