@@ -1,0 +1,231 @@
+{
+  "validation": {
+    "xgboost": {
+      "rows": 86155,
+      "fraud": 1286,
+      "pr_auc": 0.9999933952921001,
+      "roc_auc": 0.9999998992134379,
+      "recall_at_fpr_0.1pct": 1.0,
+      "recall_at_fpr_1pct": 1.0,
+      "precision_at_recall_90pct": 1.0,
+      "at_best_f1_threshold": {
+        "threshold": 0.05949462577700615,
+        "f1": 0.9992223950233281,
+        "f2": 0.9992223950233281,
+        "precision": 0.9992223950233281,
+        "recall": 0.9992223950233281,
+        "mcc": 0.9992106121579709,
+        "false_positive_rate": 1.1782865357197563e-05,
+        "confusion_matrix": {
+          "tn": 84868,
+          "fp": 1,
+          "fn": 1,
+          "tp": 1285
+        }
+      },
+      "at_t_high": {
+        "threshold": 0.00017436250031459814,
+        "f1": 0.9651031894934334,
+        "f2": 0.9857427564004293,
+        "precision": 0.9325598259608412,
+        "recall": 1.0,
+        "mcc": 0.965162121543436,
+        "false_positive_rate": 0.0010958064782193733,
+        "confusion_matrix": {
+          "tn": 84776,
+          "fp": 93,
+          "fn": 0,
+          "tp": 1286
+        }
+      },
+      "bands": {
+        "LOW": {
+          "count": 84690,
+          "fraud": 0,
+          "fraud_rate": 0.0
+        },
+        "MEDIUM": {
+          "count": 86,
+          "fraud": 0,
+          "fraud_rate": 0.0
+        },
+        "HIGH": {
+          "count": 1379,
+          "fraud": 1286,
+          "fraud_rate": 0.9325598259608412
+        }
+      }
+    },
+    "lr_baseline": {
+      "rows": 86155,
+      "fraud": 1286,
+      "pr_auc": 0.7003140033324015,
+      "roc_auc": 0.9667063090756999,
+      "recall_at_fpr_0.1pct": 0.5,
+      "recall_at_fpr_1pct": 0.6944012441679627,
+      "precision_at_recall_90pct": 0.10349450353025293,
+      "at_best_f1_threshold": {
+        "threshold": 0.016803434118628502,
+        "f1": 0.6657620985979195,
+        "f2": 0.6063601911352776,
+        "precision": 0.7956756756756757,
+        "recall": 0.5723172628304821,
+        "mcc": 0.6707668154022925,
+        "false_positive_rate": 0.0022269615525103395,
+        "confusion_matrix": {
+          "tn": 84680,
+          "fp": 189,
+          "fn": 550,
+          "tp": 736
+        }
+      },
+      "at_t_high": {
+        "threshold": 0.00017436250031459814,
+        "f1": 0.03639667262868013,
+        "f2": 0.08626722652885443,
+        "precision": 0.018536726431463275,
+        "recall": 0.9968895800933126,
+        "mcc": 0.06005877741628604,
+        "false_positive_rate": 0.7997973347158562,
+        "confusion_matrix": {
+          "tn": 16991,
+          "fp": 67878,
+          "fn": 4,
+          "tp": 1282
+        }
+      },
+      "bands": {
+        "LOW": {
+          "count": 10647,
+          "fraud": 3,
+          "fraud_rate": 0.0002817695125387433
+        },
+        "MEDIUM": {
+          "count": 6348,
+          "fraud": 1,
+          "fraud_rate": 0.0001575299306868305
+        },
+        "HIGH": {
+          "count": 69160,
+          "fraud": 1282,
+          "fraud_rate": 0.018536726431463275
+        }
+      }
+    }
+  },
+  "test": {
+    "xgboost": {
+      "rows": 38475,
+      "fraud": 1366,
+      "pr_auc": 0.9999989297303777,
+      "roc_auc": 0.9999999605451819,
+      "recall_at_fpr_0.1pct": 1.0,
+      "recall_at_fpr_1pct": 1.0,
+      "precision_at_recall_90pct": 1.0,
+      "at_best_f1_threshold": {
+        "threshold": 0.05949462577700615,
+        "f1": 0.9992673992673993,
+        "f2": 0.9988283538371412,
+        "precision": 1.0,
+        "recall": 0.9985358711566618,
+        "mcc": 0.9992407406051467,
+        "false_positive_rate": 0.0,
+        "confusion_matrix": {
+          "tn": 37109,
+          "fp": 0,
+          "fn": 2,
+          "tp": 1364
+        }
+      },
+      "at_t_high": {
+        "threshold": 0.00017436250031459814,
+        "f1": 0.984149855907781,
+        "f2": 0.9935990689554844,
+        "precision": 0.9687943262411347,
+        "recall": 1.0,
+        "mcc": 0.9836898040019477,
+        "false_positive_rate": 0.0011856961922983643,
+        "confusion_matrix": {
+          "tn": 37065,
+          "fp": 44,
+          "fn": 0,
+          "tp": 1366
+        }
+      },
+      "bands": {
+        "LOW": {
+          "count": 37015,
+          "fraud": 0,
+          "fraud_rate": 0.0
+        },
+        "MEDIUM": {
+          "count": 50,
+          "fraud": 0,
+          "fraud_rate": 0.0
+        },
+        "HIGH": {
+          "count": 1410,
+          "fraud": 1366,
+          "fraud_rate": 0.9687943262411347
+        }
+      }
+    },
+    "lr_baseline": {
+      "rows": 38475,
+      "fraud": 1366,
+      "pr_auc": 0.7517197471494086,
+      "roc_auc": 0.9578014741661491,
+      "recall_at_fpr_0.1pct": 0.4868228404099561,
+      "recall_at_fpr_1pct": 0.650805270863836,
+      "precision_at_recall_90pct": 0.17718236819360414,
+      "at_best_f1_threshold": {
+        "threshold": 0.016803434118628502,
+        "f1": 0.6738544474393531,
+        "f2": 0.5929791271347249,
+        "precision": 0.872093023255814,
+        "recall": 0.5490483162518301,
+        "mcc": 0.683588470096761,
+        "false_positive_rate": 0.002964240480745911,
+        "confusion_matrix": {
+          "tn": 36999,
+          "fp": 110,
+          "fn": 616,
+          "tp": 750
+        }
+      },
+      "at_t_high": {
+        "threshold": 0.00017436250031459814,
+        "f1": 0.08391219783273131,
+        "f2": 0.18622050480966867,
+        "precision": 0.04380338436744561,
+        "recall": 0.9948755490483162,
+        "mcc": 0.09152918489886588,
+        "false_positive_rate": 0.7994287100164381,
+        "confusion_matrix": {
+          "tn": 7443,
+          "fp": 29666,
+          "fn": 7,
+          "tp": 1359
+        }
+      },
+      "bands": {
+        "LOW": {
+          "count": 4445,
+          "fraud": 5,
+          "fraud_rate": 0.0011248593925759281
+        },
+        "MEDIUM": {
+          "count": 3005,
+          "fraud": 2,
+          "fraud_rate": 0.0006655574043261231
+        },
+        "HIGH": {
+          "count": 31025,
+          "fraud": 1359,
+          "fraud_rate": 0.04380338436744561
+        }
+      }
+    }
+  },
+  "onnx_vs_native_max_abs_diff": 5.289912223815918e-07
+}
