@@ -9,6 +9,7 @@ Env vars: ZSHIELD_DB (sqlite path), ZSHIELD_ALERT_TIMEOUT_S (GenAI timeout), ZSH
 import importlib
 import logging
 import os
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from contextlib import asynccontextmanager
@@ -49,6 +50,8 @@ async def lifespan(app: FastAPI):
         explainer=_load_explainer(),
         pool=ThreadPoolExecutor(max_workers=4, thread_name_prefix="alert"),
         alert_timeout=float(os.getenv("ZSHIELD_ALERT_TIMEOUT_S", "2.0")),
+        inflight={},                     # txn_id -> Event, set when that txn_id's request finishes
+        inflight_lock=threading.Lock(),
     )
     log.info("ZShield ready: scorer=%s thresholds=(%s, %s)", app.state.rt.scorer.name,
              app.state.rt.thresholds.step_up, app.state.rt.thresholds.hold)
@@ -95,11 +98,27 @@ def health():
 def score(txn: Txn):
     rt = app.state.rt
 
-    # Duplicate txn_id: return the original decision, do not re-score or touch state.
-    prior = rt.db.get(txn.txn_id)
-    if prior:
-        return _response_from_row(prior)
+    # Claim this txn_id. A duplicate that arrives while the first request is still scoring waits
+    # for it, so the payment is scored once and the state store is updated once.
+    while True:
+        with rt.inflight_lock:
+            done = rt.inflight.get(txn.txn_id)
+            if done is None:
+                rt.inflight[txn.txn_id] = threading.Event()
+                break
+        done.wait()
+    try:
+        # Duplicate txn_id: return the original decision, do not re-score or touch state.
+        prior = rt.db.get(txn.txn_id)
+        if prior:
+            return _response_from_row(prior)
+        return _score_new(rt, txn)
+    finally:
+        with rt.inflight_lock:
+            rt.inflight.pop(txn.txn_id).set()
 
+
+def _score_new(rt, txn: Txn) -> ScoreResponse:
     t0 = time.perf_counter()
     data = txn.model_dump()
     feats: dict = {}

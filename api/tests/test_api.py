@@ -159,3 +159,33 @@ def test_onnx_scorer_matches_sklearn(tmp_path):
     assert sc.name == "onnx"
     f = {"amount": 7000.0, "is_full_drain": 1, "new_recipient": 1}
     assert abs(sc.score(f) - float(clf.predict_proba([[7000, 1, 1]])[0, 1])) < 1e-4
+
+
+def test_concurrent_duplicate_txn_id_is_scored_once(client):
+    """Two requests with the same new txn_id at the same moment: score once, same answer, state touched once."""
+    import threading
+    from api.schemas import Txn
+
+    calls = []
+
+    class Slow:
+        name = "slow"
+        def score(self, f):
+            calls.append(1)
+            time.sleep(0.3)                 # hold the first request open so the second one overlaps
+            return 0.1
+    m.app.state.rt.scorer = Slow()
+
+    results = [None] * 4
+    def hit(k):
+        results[k] = m.score(Txn(**normal("RACE"))).model_dump()
+    threads = [threading.Thread(target=hit, args=(k,)) for k in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert len(calls) == 1
+    assert all(r == results[0] for r in results)
+    assert len(m.app.state.rt.state._sender["CRACE"]) == 1
+    assert client.get("/stats").json()["total_processed"] == 1
