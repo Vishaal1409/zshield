@@ -10,6 +10,8 @@ import api.main as m
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
+    # These tests exercise the API logic with the placeholder rule; test_model_onnx.py covers the real model.
+    monkeypatch.setenv("ZSHIELD_MODEL_DIR", str(tmp_path / "no_model"))
     monkeypatch.setenv("ZSHIELD_DB", str(tmp_path / "audit.db"))
     monkeypatch.setenv("ZSHIELD_ALERT_TIMEOUT_S", "0.3")
     with TestClient(m.app) as c:
@@ -189,3 +191,67 @@ def test_concurrent_duplicate_txn_id_is_scored_once(client):
     assert all(r == results[0] for r in results)
     assert len(m.app.state.rt.state.data["sender_steps"]["CRACE"]) == 1
     assert client.get("/stats").json()["total_processed"] == 1
+
+
+FEED_FIELDS = {"txn_id", "risk_score", "decision", "reasons", "alert_text", "analyst_status", "amount",
+               "type", "step", "nameOrig", "nameDest", "latency_ms"}
+
+
+def test_recent_returns_all_decisions_newest_first_with_contract_fields(client):
+    client.post("/score", json=normal("N1"))
+    client.post("/score", json=txn("H1", amount=9000.0))
+    client.post("/score", json=normal("N2"))
+    rows = client.get("/recent").json()
+    assert [r["txn_id"] for r in rows] == ["N2", "H1", "N1"]
+    assert [r["decision"] for r in rows] == ["APPROVE", "HOLD", "APPROVE"]
+    for r in rows:
+        assert FEED_FIELDS <= set(r)
+    h1 = rows[1]
+    assert (h1["type"], h1["step"], h1["nameOrig"], h1["nameDest"], h1["amount"]) == ("TRANSFER", 2, "C1", "C2", 9000.0)
+    assert h1["latency_ms"] > 0 and isinstance(h1["reasons"], list)
+
+
+def test_recent_limit_and_validation(client):
+    for i in range(5):
+        client.post("/score", json=normal(f"N{i}"))
+    assert [r["txn_id"] for r in client.get("/recent?limit=2").json()] == ["N4", "N3"]
+    assert len(client.get("/recent").json()) == 5               # default limit is 50
+    assert client.get("/recent?limit=0").status_code == 422
+    assert client.get("/recent?limit=abc").status_code == 422
+    assert client.get("/recent?limit=1001").status_code == 422
+
+
+def test_recent_empty_and_reflects_analyst_action(client):
+    assert client.get("/recent").json() == []
+    client.post("/score", json=txn("H1"))
+    client.post("/analyst_action", json={"txn_id": "H1", "action": "ESCALATE"})
+    assert client.get("/recent").json()[0]["analyst_status"] == "ESCALATE"
+
+
+def test_alerts_have_the_same_extra_fields_as_recent(client):
+    client.post("/score", json=txn("H1"))
+    client.post("/score", json=normal("N1"))
+    alerts = client.get("/alerts").json()
+    assert [a["txn_id"] for a in alerts] == ["H1"]
+    assert FEED_FIELDS <= set(alerts[0])
+    assert {k: v for k, v in alerts[0].items()} == client.get("/recent").json()[1]
+
+
+def test_old_audit_file_is_migrated(tmp_path):
+    """An audit DB written before /recent existed (no type/nameOrig/nameDest) still opens and works."""
+    import sqlite3
+    from api.db import AuditDB
+    path = str(tmp_path / "old.db")
+    con = sqlite3.connect(path)
+    con.execute("CREATE TABLE decisions (txn_id TEXT PRIMARY KEY, ts REAL NOT NULL, step INTEGER,"
+                " amount REAL NOT NULL, risk_score REAL NOT NULL, decision TEXT NOT NULL, reasons TEXT NOT NULL,"
+                " alert_text TEXT NOT NULL, latency_ms REAL NOT NULL, explain_ms REAL NOT NULL DEFAULT 0,"
+                " scorer TEXT NOT NULL DEFAULT '', error TEXT, analyst_status TEXT NOT NULL DEFAULT 'PENDING')")
+    con.execute("INSERT INTO decisions (txn_id, ts, step, amount, risk_score, decision, reasons, alert_text,"
+                " latency_ms) VALUES ('OLD', 1, 3, 10, 0.1, 'APPROVE', '[]', '', 0.5)")
+    con.commit()
+    con.close()
+    db = AuditDB(path)
+    row = db.recent(5)[0]
+    assert row["txn_id"] == "OLD" and row["type"] == "" and row["nameOrig"] == ""
+    db.close()

@@ -5,11 +5,21 @@ never a silent approve.
 """
 import json
 import logging
+import os
 from pathlib import Path
 
 log = logging.getLogger("zshield.decision")
 THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "model" / "thresholds.json"
 DEFAULTS = {"step_up": 0.5, "hold": 0.9}
+
+# History rules. The trained model does not use the history features (on PaySim nearly every sender
+# appears once), so it cannot see a mule burst. These rules cover it: a payment that would be APPROVEd
+# but goes to a recipient already hit by MULE_MIN+ payments in the window (or comes from a sender with
+# SENDER_MIN+ recent payments) is raised to STEP_UP. Set ZSHIELD_HISTORY_RULES=0 to switch them off.
+HISTORY_RULES = os.getenv("ZSHIELD_HISTORY_RULES", "1") != "0"
+MULE_MIN = int(os.getenv("ZSHIELD_MULE_MIN", "5"))
+SENDER_MIN = int(os.getenv("ZSHIELD_SENDER_MIN", "10"))
+RULE_SCORE_FLOOR = 0.5       # risk_score shown for a rule-raised payment
 
 FAILSAFE_SCORE = 0.5
 FAILSAFE_REASON = "Scoring unavailable, extra check applied"
@@ -38,6 +48,11 @@ class Thresholds:
         if score >= self.step_up:
             return "STEP_UP"
         return "APPROVE"
+
+
+def history_rule(f: dict) -> bool:
+    return (HISTORY_RULES and (f.get("recipient_inbound_count_recent", 0) >= MULE_MIN
+                               or f.get("sender_txn_count_recent", 0) >= SENDER_MIN))
 
 
 def rule_reasons(f: dict) -> list:

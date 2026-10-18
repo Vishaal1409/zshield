@@ -111,3 +111,16 @@ The API's own decision latency was about 0.03 ms p50 and under 0.1 ms p99 with t
 - [ ] Fail-safe works: `test_model_failure_fails_safe_to_step_up_and_is_logged` passes (a scorer that raises gives STEP_UP and fills the audit `error` column)
 - [ ] Load-test table saved for laptop and LinuxONE, labelled with the machine
 - [ ] No `*.db`, keys or data files staged in git (`git status`)
+
+---
+
+## Update, Sun 18 Oct (branch `abhinava/recent-endpoint`)
+
+Read this section first; it replaces the parts above that mention the placeholder scorer and `feature_columns.json`.
+
+- **`GET /recent?limit=50`** (1 to 1000, default 50): latest decisions of every type including APPROVE, newest first. `/alerts` returns the same fields for STEP_UP and HOLD only: `txn_id, risk_score, decision, reasons, alert_text, analyst_status, amount, type, step, nameOrig, nameDest, latency_ms`. The audit table now stores `type`, `nameOrig` and `nameDest`; an old `zshield_audit.db` is upgraded automatically on startup.
+- **Real model wired in.** The API loads `artifacts/model.onnx` + `artifacts/model_meta.json` (override the folder with `ZSHIELD_MODEL_DIR`). It applies the prior correction (`beta`) and the model's own cut-offs (`t_low` = STEP_UP, `t_high` = HOLD) from the meta file, and scores types other than TRANSFER / CASH_OUT as 0.0, exactly like `model/predictor.py`. `/health` shows `"scorer": "onnx"`. `model/thresholds.json` is used only by the placeholder rule. The API needs only numpy + onnxruntime (no pandas).
+- **History rules (new, needs the team's OK).** The trained model does not use the history features, so on its own it APPROVEs the whole Mule Burst story. A rule now raises an APPROVE to STEP_UP when the recipient already received 5 or more payments in the last 6 steps, or the sender made 10 or more. Such a payment shows `risk_score` 0.5 and is stored with scorer `onnx+history_rule`. Switch off with `ZSHIELD_HISTORY_RULES=0`; tune with `ZSHIELD_MULE_MIN`, `ZSHIELD_SENDER_MIN`. Say in the deck that Story 2 is caught by this rule, not by the model.
+- **Alert facts.** `generate_alert` now also receives `txn_id`, `type` and `risk_score` (Arun's request).
+- **Scores are small numbers.** After correction, the model's cut-offs are about 0.0001 and 0.00017, so a payment can be HOLD with a model score well below 0.01 (real drains score 0.97 to 0.99 in the demo stories). Gauges that assume 0.5 and 0.9 will look wrong for borderline cases.
+- **Tests:** `python -m pytest api/tests -q` (placeholder and trained-model variants; the edge cases run against both).
