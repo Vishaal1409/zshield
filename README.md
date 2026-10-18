@@ -59,26 +59,10 @@ Latency (p50, p95, p99): [CONFIRM: paste Joshua's benchmark table, and say it wa
 
 ## Run it
 
-Requirements: Python 3.11. [CONFIRM every command below against the repo before publishing.]
-
-```bash
-git clone https://github.com/Vishaal1409/zshield.git
-cd zshield
-pip install -r requirements.txt
-
-# 1. start the scoring API
-uvicorn api.main:app --port 8000
-
-# 2. start the dashboard (new terminal)
-streamlit run dashboard/app.py
-
-# 3. replay the demo stream (new terminal)
-python api/producer.py --file demo_stream.csv --rate 100
-```
-
-Or with Docker: `docker compose up` [CONFIRM this works, or delete this line].
-
-The PaySim data is not in the repo. Download it from Kaggle (link below) into `data/`.
+python -m pip install -r requirements-api.txt
+python -m uvicorn api.main:app --port 8000
+python -m pip install -r requirements-dashboard.txt
+python -m streamlit run dashboard/app.py
 
 ## API
 
