@@ -1,33 +1,53 @@
-"""Starter dashboard (Armaan owns). Run: streamlit run dashboard/app.py"""
-import time
-
-import pandas as pd
-import requests
 import streamlit as st
 
-API = "http://localhost:8000"
-st.set_page_config(page_title="ZShield", layout="wide")
-st.title("ZShield: real-time payment protection")
+from data import sample_data, stats, replay_story
+from theme import apply_theme
 
-try:
-    s = requests.get(f"{API}/stats", timeout=2).json()
-    a = requests.get(f"{API}/alerts", timeout=2).json()
-except Exception:
-    st.warning("API not reachable. Start it with: uvicorn api.main:app --port 8000")
-    st.stop()
+st.set_page_config(page_title="ZShield | Transaction Intelligence", layout="wide", initial_sidebar_state="expanded")
+apply_theme()
+sample_data()
 
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Processed", s["total_processed"])
-c2.metric("Flagged", s["flagged_count"])
-c3.metric("Value intercepted", f"{s['value_intercepted']:,.0f}")
-c4.metric("Avg latency (ms)", s["avg_latency_ms"])
+with st.sidebar:
+    st.markdown("### Demo controls")
+    st.caption("Replay a sample transaction story")
+    for label in ["Scam Drain", "Mule Burst", "Normal Day"]:
+        if st.button(label, width="stretch"):
+            replay_story(label)
+            st.toast(f"{label} replay added to the feed")
+    st.slider("Stream speed", min_value=1, max_value=50, value=12, format="%d tx/s")
+    c1, c2 = st.columns(2)
+    if c1.button("Stop", width="stretch"):
+        st.session_state.active_story = "Stopped"
+        st.toast("Demo replay stopped")
+    if c2.button("Reset", width="stretch"):
+        st.session_state.pop("transactions", None)
+        st.session_state.pop("active_story", None)
+        st.rerun()
+    st.divider()
+    st.caption("Synthetic data · no personal information")
 
-st.subheader("Latest flagged payments")
-if a:
-    st.dataframe(pd.DataFrame(a)[["txn_id", "amount", "risk_score", "decision", "reasons", "alert_text", "analyst_status"]],
-                 use_container_width=True)
-else:
-    st.info("No flagged payments yet. Run the producer.")
+df = sample_data()
+metrics = stats(df)
+pages = [
+    st.Page("pages/live_feed.py", title="Live Feed"),
+    st.Page("pages/home.py", title="Overview", default=True),
+    st.Page("pages/alert_detail.py", title="Alert Detail"),
+    st.Page("pages/impact.py", title="Impact"),
+    st.Page("pages/under_hood.py", title="Under the Hood"),
+]
+pg = st.navigation(pages, position="top")
 
-time.sleep(2)
-st.rerun()
+st.markdown(
+    """
+    <section class="hero-banner">
+      <div class="hero-brand">◈ ZShield</div>
+      <div class="hero-content">
+        <div class="hero-kicker">REAL-TIME PAYMENT INTELLIGENCE</div>
+        <div class="hero-message">Catch the unusual before money moves.</div>
+        <div class="hero-detail">Explainable risk signals · Human review · Decisions in time</div>
+      </div>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
+pg.run()

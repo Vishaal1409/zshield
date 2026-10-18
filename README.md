@@ -37,7 +37,7 @@ uvicorn api.main:app --reload --port 8000
 curl http://localhost:8000/health
 ```
 
-Dashboard (needs the API running):
+Dashboard (standalone synthetic-data prototype):
 ```bash
 pip install -r requirements-dashboard.txt
 streamlit run dashboard/app.py
