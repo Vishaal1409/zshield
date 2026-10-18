@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS decisions (
     txn_id         TEXT PRIMARY KEY,
     ts             REAL NOT NULL,
     step           INTEGER,
+    type           TEXT,
+    nameOrig       TEXT,
+    nameDest       TEXT,
     amount         REAL NOT NULL,
     risk_score     REAL NOT NULL,
     decision       TEXT NOT NULL,
@@ -37,6 +40,14 @@ class AuditDB:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Older audit files (before /recent) lack type, nameOrig and nameDest: add them in place."""
+        have = {r["name"] for r in self._conn.execute("PRAGMA table_info(decisions)")}
+        for col in ("type", "nameOrig", "nameDest"):
+            if col not in have:
+                self._conn.execute(f"ALTER TABLE decisions ADD COLUMN {col} TEXT")
 
     def close(self) -> None:
         with self._lock:
@@ -47,11 +58,12 @@ class AuditDB:
         """Insert a decision. Returns False if txn_id already exists (duplicate)."""
         with self._lock:
             cur = self._conn.execute(
-                "INSERT OR IGNORE INTO decisions (txn_id, ts, step, amount, risk_score, decision,"
-                " reasons, alert_text, latency_ms, explain_ms, scorer, error)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                (rec["txn_id"], time.time(), rec.get("step"), rec["amount"], rec["risk_score"],
-                 rec["decision"], json.dumps(rec["reasons"]), rec["alert_text"], rec["latency_ms"],
+                "INSERT OR IGNORE INTO decisions (txn_id, ts, step, type, nameOrig, nameDest, amount,"
+                " risk_score, decision, reasons, alert_text, latency_ms, explain_ms, scorer, error)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (rec["txn_id"], time.time(), rec.get("step"), rec.get("type"), rec.get("nameOrig"),
+                 rec.get("nameDest"), rec["amount"], rec["risk_score"], rec["decision"],
+                 json.dumps(rec["reasons"]), rec["alert_text"], rec["latency_ms"],
                  rec.get("explain_ms", 0.0), rec.get("scorer", ""), rec.get("error")),
             )
             return cur.rowcount == 1
@@ -78,13 +90,25 @@ class AuditDB:
             r = self._conn.execute("SELECT * FROM decisions WHERE txn_id=?", (txn_id,)).fetchone()
         return self._row(r) if r else None
 
-    def alerts(self, limit: int = 50) -> list:
+    # Fields shared by /alerts and /recent (docs/API_CONTRACT.md).
+    _FEED_COLS = ("txn_id, risk_score, decision, reasons, alert_text, analyst_status, amount,"
+                  " COALESCE(type,'') AS type, step, COALESCE(nameOrig,'') AS nameOrig,"
+                  " COALESCE(nameDest,'') AS nameDest, latency_ms")
+
+    def _feed(self, where: str, limit: int) -> list:
         with self._lock:
             rows = self._conn.execute(
-                "SELECT txn_id, amount, risk_score, decision, reasons, alert_text, analyst_status, ts"
-                " FROM decisions WHERE decision != 'APPROVE' ORDER BY ts DESC, rowid DESC LIMIT ?",
+                f"SELECT {self._FEED_COLS} FROM decisions {where} ORDER BY ts DESC, rowid DESC LIMIT ?",
                 (limit,)).fetchall()
         return [self._row(r) for r in rows]
+
+    def alerts(self, limit: int = 50) -> list:
+        """Flagged payments only (STEP_UP and HOLD), newest first."""
+        return self._feed("WHERE decision != 'APPROVE'", limit)
+
+    def recent(self, limit: int = 50) -> list:
+        """Latest decisions of every type, including APPROVE, newest first."""
+        return self._feed("", limit)
 
     def stats(self) -> dict:
         with self._lock:

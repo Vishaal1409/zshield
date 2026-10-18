@@ -16,12 +16,13 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from api.db import AuditDB
-from api.decision import FAILSAFE_REASON, FAILSAFE_SCORE, Thresholds, rule_reasons
+from api.decision import (FAILSAFE_REASON, FAILSAFE_SCORE, RULE_SCORE_FLOOR, Thresholds, history_rule,
+                          rule_reasons)
 from api.model_runtime import load_scorer
 from api.schemas import AnalystAction, ScoreResponse, Txn
 from api.state import StateStore
@@ -46,13 +47,18 @@ async def lifespan(app: FastAPI):
         db=AuditDB(os.getenv("ZSHIELD_DB", DEFAULT_DB)),
         state=StateStore(),
         scorer=load_scorer(),
-        thresholds=Thresholds.load(),
+        thresholds=None,
         explainer=_load_explainer(),
         pool=ThreadPoolExecutor(max_workers=4, thread_name_prefix="alert"),
         alert_timeout=float(os.getenv("ZSHIELD_ALERT_TIMEOUT_S", "2.0")),
         inflight={},                     # txn_id -> Event, set when that txn_id's request finishes
         inflight_lock=threading.Lock(),
     )
+    rt = app.state.rt
+    # A trained model carries its own cut-offs (artifacts/model_meta.json); the placeholder rule uses
+    # model/thresholds.json.
+    t = getattr(rt.scorer, "thresholds", None)
+    rt.thresholds = Thresholds(*t) if t else Thresholds.load()
     log.info("ZShield ready: scorer=%s thresholds=(%s, %s)", app.state.rt.scorer.name,
              app.state.rt.thresholds.step_up, app.state.rt.thresholds.hold)
     yield
@@ -123,10 +129,14 @@ def _score_new(rt, txn: Txn) -> ScoreResponse:
     data = txn.model_dump()
     feats: dict = {}
     error = None
+    scorer_label = rt.scorer.name
     try:
         feats = rt.state.build_features(data)
         s = float(rt.scorer.score(feats))
         decision = rt.thresholds.decide(s)
+        # Trained model only (the placeholder rule already includes these signals).
+        if decision == "APPROVE" and rt.scorer.thresholds is not None and history_rule(feats):
+            decision, s, scorer_label = "STEP_UP", max(s, RULE_SCORE_FLOOR), rt.scorer.name + "+history_rule"
     except Exception as e:                       # fail safe: never a silent approve
         log.exception("Scoring failed for %s", txn.txn_id)
         s, decision, error = FAILSAFE_SCORE, "STEP_UP", repr(e)
@@ -144,14 +154,16 @@ def _score_new(rt, txn: Txn) -> ScoreResponse:
             except Exception:
                 log.exception("explain failed; using rule reasons")
                 reasons = rule_reasons(feats)
-        alert = _alert_text(rt, {"decision": decision, "amount": data["amount"], "reasons": reasons})
+        alert = _alert_text(rt, {"txn_id": txn.txn_id, "decision": decision, "amount": data["amount"],
+                                 "type": data["type"], "risk_score": s, "reasons": reasons})
     explain_ms = (time.perf_counter() - t1) * 1000
 
     resp = ScoreResponse(txn_id=txn.txn_id, risk_score=round(s, 4), decision=decision, reasons=reasons,
                          alert_text=alert, latency_ms=round(latency_ms, 3))
     try:
         rt.db.insert({**resp.model_dump(), "step": data["step"], "amount": data["amount"],
-                      "explain_ms": round(explain_ms, 3), "scorer": rt.scorer.name, "error": error})
+                      "type": data["type"], "nameOrig": data["nameOrig"], "nameDest": data["nameDest"],
+                      "explain_ms": round(explain_ms, 3), "scorer": scorer_label, "error": error})
     except Exception:
         log.exception("Audit log write failed for %s", txn.txn_id)   # never block a payment decision
     return resp
@@ -165,6 +177,12 @@ def stats():
 @app.get("/alerts")
 def alerts():
     return app.state.rt.db.alerts(50)
+
+
+@app.get("/recent")
+def recent(limit: int = Query(50, ge=1, le=1000)):
+    """Latest decisions of ALL types (including APPROVE), newest first. Same fields as /alerts."""
+    return app.state.rt.db.recent(limit)
 
 
 @app.post("/analyst_action")

@@ -10,8 +10,13 @@ import api.main as m
 SPEC = json.loads((Path(__file__).resolve().parents[2] / "docs/demo/edge_cases.json").read_text())
 
 
-@pytest.fixture()
-def client(tmp_path, monkeypatch):
+@pytest.fixture(params=["placeholder", "trained_model"])
+def client(request, tmp_path, monkeypatch):
+    """Every edge case runs against the placeholder rule AND the trained model in artifacts/."""
+    if request.param == "placeholder":
+        monkeypatch.setenv("ZSHIELD_MODEL_DIR", str(tmp_path / "no_model"))
+    else:
+        monkeypatch.delenv("ZSHIELD_MODEL_DIR", raising=False)
     monkeypatch.setenv("ZSHIELD_DB", str(tmp_path / "audit.db"))
     monkeypatch.setenv("ZSHIELD_ALERT_TIMEOUT_S", "0.3")
     with TestClient(m.app) as c:
