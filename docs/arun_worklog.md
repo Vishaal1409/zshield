@@ -1,0 +1,77 @@
+# Arun's worklog: GenAI, responsible AI, storytelling
+
+Branch: `arun/genai` (local only, not pushed). Only Vishaal merges to main.
+Source of truth: `ZShield_IBM_Z_Datathon_Team_Plan.docx` (read 17 Oct), then the Claude Code prompt.
+
+## Change from the plan doc
+- Personas: the plan asks for two (fraud analyst, first-time user). Arun asked for a **third: a fraudster
+  targeting the first-time user**. It is written as an illustrative profile at the level of publicly reported
+  scam patterns, with no step-by-step method.
+
+## Integration facts found in the repo
+- `api/main.py` imports `generate_alert` and `template_alert` from `genai.explain`. Both names must stay.
+- The API currently passes only `decision, amount, reasons` in `facts`. The module must cope with missing
+  `txn_id, type, risk_score`. (Handoff to Abhinava: add them.)
+- The API already wraps the call in a 2 s timeout and falls back to `template_alert`.
+
+## Plan and agents
+
+| Wave | Agent | Model | Owns | Tasks |
+|---|---|---|---|---|
+| 1 | A: research and problem framing | sonnet | `docs/problem/` | t1 |
+| 1 | B: GenAI alert engineer | sonnet | `genai/` | t2, t4, t5 |
+| 1 | C: responsible AI writer | sonnet | `docs/responsible_ai.md`, `docs/fairness_robustness_template.md` | t6, t11 |
+| 2 | D: storyteller | sonnet | `docs/deck/`, `docs/abstract/` | t7, t8, t9, t10 |
+| 3 | E: reviewer and fact-checker | opus | read-only report | t12 |
+| - | Lead | opus | `docs/arun_worklog.md`, `docs/handoffs.md`, README TODOs | review, fixes, commits |
+
+## Acceptance criteria (lead checks each one by opening the files and running the tests)
+- **A:** exact problem line verbatim; 3–4 sentence README version; 3 personas (goal, pain, what ZShield
+  changes, illustrative quote); 4–5 India stats, each with figure, exact quote, publisher, report, date, URL,
+  access date and deck use. Every stat comes from a page the agent opened; 2023 or later unless it's the latest
+  available; units exactly as the source states them; one stat chosen for the opener.
+- **B:** `pytest genai/tests` passes offline with no keys; 10 named cases plus a mocked-model fallback test;
+  alert is 40 words or fewer; summary is exactly 3 lines; the validator enforces all 7 rules; the functions
+  never raise; `template_alert` is kept; the existing `api/tests` still pass.
+- **C:** 8 checklist areas, each with what we do and where a judge sees it; a 6-bullet, 60-word version for the
+  dashboard; a fairness template with `[[NEEDS: …]]` placeholders only.
+- **D:** 10 slides with a headline, at most 3 bullets, visual plus supplier, and notes; IBM Z slide uses
+  "designed for / deployable on"; a 16:9 pptx with labelled placeholders; a timed 3-minute script in two
+  columns plus a 60 s backup; abstracts at about 100, 150 and 250 words with results left as placeholders.
+- **E:** an issue list with severity, file:line and fix. The lead resolves every item and re-checks.
+
+## Status log
+- Sat 17 Oct: read plan doc and repo, created branch and venv, `api/tests` 18 passed. Wave 1 launched.
+- Wave 1: C accepted (all cited files/tests exist), A accepted (all 5 stats re-fetched with curl and found
+  verbatim), B accepted after two lead fixes (watsonx chat params, timeout guard). Committed.
+- Wave 2: D accepted after lead fixes (verbatim problem line, audit-log wording, IBM Z wording, slide-1 overlap,
+  long abstract trim). Handoffs drafted.
+- Wave 3: E found 23 issues (1 blocker, 4 major). All fixed by the lead or D. Re-check: 20 resolved, 3 partly.
+  Second pass closed the last GenAI gap with a word allowlist (17 more bypasses now regression tests).
+  Still open: README.md "top reasons (SHAP)" in Vishaal's section (flagged in his handoff).
+- Final checks (lead): `genai/tests` 119 passed offline; `api/tests` 18 passed; 25,664-case template sweep, no
+  false rejections; no secrets or data files on the branch. Nothing pushed.
+
+## Task status (17 Oct, end of session)
+| # | Task | Status |
+|---|---|---|
+| t1 | Problem statement, personas (3), 5 cited stats | Done |
+| t2 | GenAI module design | Done (`genai/DESIGN.md`) |
+| t4 | `genai/explain.py` with fallback | Done (watsonx / openai_compat written and mocked, not run live) |
+| t5 | Tests pass, handoff to Abhinava | Done (handoff drafted, not sent) |
+| t6 | Responsible-AI checklist, copy to Armaan | Done (handoff drafted, not sent) |
+| t7 | 10-slide storyline | Done |
+| t8 | Deck draft | Partly: structure done; charts, screenshots, IBM Z evidence pending from teammates |
+| t9 | Demo and video script | Done; depends on Armaan's dashboard pages |
+| t10 | Abstract | Drafted; Vishaal to confirm if required and the word limit |
+| t11 | Fairness and robustness text | Partly: template and limits done; Joshua's numbers pending |
+| t12 | Proofread | Done once (E, two passes); repeat Sunday evening after teammates' numbers land |
+
+## Sun 18 Oct: done-only pass
+- Arun asked to remove all text about unfinished work and keep it in a TODO. The deck, script, abstract, problem
+  statement, personas, responsible-AI page and README now state only what is built or measured. Everything
+  removed is in `docs/TODO.md` (13 items, with owner, done-when, where and the text to paste).
+- New measurements (lead, laptop Intel i7 x86, rule-based scorer): load test in `docs/deck/measured_17oct.md`
+  (p95 3.23 ms end to end, 375/s at 1 client, 718/s at 8); sample replay of `docs/samples/sample_stream.csv`
+  (252 payments: 245 APPROVE, 5 STEP_UP, 2 HOLD; T240 ₹48,000 held; BLOCK via POST /analyst_action shows in /alerts).
+- Demo script rewritten around what runs today: producer replay, one-page dashboard, `/docs` page for Block.
