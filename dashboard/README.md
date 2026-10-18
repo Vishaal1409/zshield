@@ -1,27 +1,13 @@
-# ZShield dashboard
+# ZShield Dashboard
 
-A Streamlit dashboard prototype for reviewing real-time payment risk decisions. It includes an Overview landing page, Live Feed, Alert Detail, Impact, and Under the Hood views. Navigation stays at the top of the page.
+This Streamlit dashboard reads metrics and transaction rows from the scoring API.
 
-## Run locally
+The API URL is set in config.py. It defaults to http://127.0.0.1:8000 and can be changed to the IBM Z server.
 
-```powershell
-cd dashboard
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r ..\requirements-dashboard.txt
-streamlit run app.py
-```
+From the repository root, start the API with:
+uvicorn api.main:app --host 0.0.0.0 --port 8000
 
-The first run uses local synthetic transactions. Use the demo controls in the left panel to add a Scam Drain, Mule Burst, or Normal Day sequence. Reset restores the initial sample feed.
+From a second terminal at the repository root, start the dashboard with:
+python -m streamlit run dashboard/app.py
 
-## Dashboard views
-
-- **Overview:** headline metrics, recent activity, decision mix, and flagged transactions.
-- **Live Feed:** scrollable transaction table with decision filters and a decision mix chart.
-- **Alert Detail:** risk context, reasons, alert summary, and analyst action controls.
-- **Impact:** value and latency charts with evaluation metrics when ground-truth labels are available.
-- **Under the Hood:** decision flow, IBM Z rationale, system limits, and responsible AI principles.
-
-## Data and integration
-
-This prototype starts with deterministic, synthetic demo transactions and does not send analyst actions to the repository API. The API is available separately; connecting the dashboard to it is not part of this prototype. See [ASSUMPTIONS.md](ASSUMPTIONS.md) for implementation assumptions.
+The API should provide GET /health, GET /stats, GET /alerts, GET /recent, POST /score, and POST /analyst_action. Story CSVs are in docs/demo/story_*.csv. The dashboard posts each story row to /score. Mule Burst is a constructed scenario. Amounts are shown in units, without a currency symbol.

@@ -1,0 +1,2 @@
+txn_id,step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest
+scam-drain,480,TRANSFER,9000,SCAMMER-01,9000,0,NEW-RECIPIENT-01,0,0

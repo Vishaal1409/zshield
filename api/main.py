@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -131,7 +131,9 @@ def score(txn: Txn):
     resp = ScoreResponse(txn_id=txn.txn_id, risk_score=round(s, 4), decision=decision, reasons=reasons,
                          alert_text=alert, latency_ms=round(latency_ms, 3))
     try:
-        rt.db.insert({**resp.model_dump(), "step": data["step"], "amount": data["amount"],
+        rt.db.insert({**resp.model_dump(), "step": data["step"], "type": data["type"],
+                      "nameOrig": data["nameOrig"], "nameDest": data["nameDest"],
+                      "amount": data["amount"],
                       "explain_ms": round(explain_ms, 3), "scorer": rt.scorer.name, "error": error})
     except Exception:
         log.exception("Audit log write failed for %s", txn.txn_id)   # never block a payment decision
@@ -146,6 +148,12 @@ def stats():
 @app.get("/alerts")
 def alerts():
     return app.state.rt.db.alerts(50)
+
+
+@app.get("/recent")
+def recent(limit: int = Query(default=200, ge=1, le=1000)):
+    """Recent scored transactions for the dashboard stream and latency chart."""
+    return app.state.rt.db.recent(limit)
 
 
 @app.post("/analyst_action")

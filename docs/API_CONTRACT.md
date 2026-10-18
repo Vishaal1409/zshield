@@ -35,8 +35,12 @@ decision is one of APPROVE, STEP_UP, HOLD.
 ## GET /stats
 total_processed, flagged_count, held_count, value_intercepted, avg_latency_ms, p95_latency_ms
 
+## GET /recent
+Dashboard transaction stream and latency chart. Accepts an optional limit query parameter (1 to 1000; default 200).
+Returns newest-first rows with txn_id, step, type, amount, risk_score, decision, latency_ms, analyst_status, and ts.
+
 ## GET /alerts
-Latest flagged transactions: txn_id, amount, risk_score, decision, reasons, alert_text, analyst_status
+Latest flagged transactions: txn_id, step, type, nameOrig, nameDest, amount, risk_score, decision, reasons, alert_text, analyst_status, latency_ms, ts
 
 ## POST /analyst_action
 {"txn_id": "T1", "action": "APPROVE" | "BLOCK" | "ESCALATE"}
