@@ -1,0 +1,47 @@
+{
+  "model_type": "xgboost.XGBClassifier",
+  "model_version": "1.0.0",
+  "trained_at": "2026-10-17T17:50:22+00:00",
+  "features": [
+    "is_transfer",
+    "amount",
+    "oldbalanceOrg",
+    "newbalanceOrig",
+    "oldbalanceDest",
+    "newbalanceDest",
+    "err_bal_orig",
+    "err_bal_dest",
+    "full_drain",
+    "amt_to_bal",
+    "hour"
+  ],
+  "scored_types": [
+    "TRANSFER",
+    "CASH_OUT"
+  ],
+  "t_low": 0.00010388558075646414,
+  "t_high": 0.00017436250031459814,
+  "beta": 0.002106265467472762,
+  "classes": {
+    "LOW": "score < t_low",
+    "MEDIUM": "t_low <= score < t_high",
+    "HIGH": "score >= t_high"
+  },
+  "threshold_cost": {
+    "c_stepup": 10.0,
+    "c_hold": 50.0,
+    "stepup_miss": 0.5
+  },
+  "split": {
+    "train_steps": "1-500",
+    "val_steps": "501-620",
+    "test_steps": "621-743",
+    "neg_ratio": 1.0,
+    "seed": 42
+  },
+  "test_summary": {
+    "pr_auc": 0.9999989297303777,
+    "roc_auc": 0.9999999605451819,
+    "f1": 0.9992673992673993
+  }
+}
