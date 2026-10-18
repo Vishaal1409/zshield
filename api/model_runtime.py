@@ -19,7 +19,7 @@ MODEL_DIR = Path(__file__).resolve().parent.parent / "model"
 def placeholder_score(f: dict) -> float:
     """Rule used until the real model arrives, so the pipeline can run end to end."""
     score = 0.05
-    if f.get("is_full_drain"):
+    if f.get("full_drain"):
         score += 0.6
     if f.get("new_recipient"):
         score += 0.15

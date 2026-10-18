@@ -147,7 +147,7 @@ def test_onnx_scorer_matches_sklearn(tmp_path):
     from sklearn.linear_model import LogisticRegression
     from skl2onnx.common.data_types import FloatTensorType
     from api.model_runtime import load_scorer
-    cols = ["amount", "is_full_drain", "new_recipient"]
+    cols = ["amount", "full_drain", "new_recipient"]
     X = np.array([[100, 0, 0], [5000, 1, 1], [200, 0, 1], [9000, 1, 1]] * 5, dtype=np.float32)
     y = np.array([0, 1, 0, 1] * 5)
     clf = LogisticRegression().fit(X, y)
@@ -157,7 +157,7 @@ def test_onnx_scorer_matches_sklearn(tmp_path):
     (tmp_path / "feature_columns.json").write_text(json.dumps(cols))
     sc = load_scorer(tmp_path)
     assert sc.name == "onnx"
-    f = {"amount": 7000.0, "is_full_drain": 1, "new_recipient": 1}
+    f = {"amount": 7000.0, "full_drain": 1, "new_recipient": 1}
     assert abs(sc.score(f) - float(clf.predict_proba([[7000, 1, 1]])[0, 1])) < 1e-4
 
 
@@ -187,5 +187,5 @@ def test_concurrent_duplicate_txn_id_is_scored_once(client):
 
     assert len(calls) == 1
     assert all(r == results[0] for r in results)
-    assert len(m.app.state.rt.state._sender["CRACE"]) == 1
+    assert len(m.app.state.rt.state.data["sender_steps"]["CRACE"]) == 1
     assert client.get("/stats").json()["total_processed"] == 1
