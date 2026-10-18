@@ -30,3 +30,10 @@ venv/
 # SQLite runtime files
 *.db-shm
 *.db-wal
+
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+.pytest_cache/
