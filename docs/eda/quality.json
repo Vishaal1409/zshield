@@ -1,0 +1,13 @@
+{
+  "rows": 6362620,
+  "null_cells": 0,
+  "duplicate_rows": 0,
+  "negative_amounts": 0,
+  "zero_amounts": 16,
+  "fraud": 8213,
+  "fraud_rate_pct": 0.129,
+  "isFlaggedFraud": 16,
+  "senders_seen_once_pct": 99.85,
+  "transfer_cashout_sender_books_off_pct": 90.3,
+  "transfer_cashout_recipient_books_off_pct": 22.7
+}

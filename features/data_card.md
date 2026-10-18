@@ -1,3 +1,90 @@
-# Data card (Balaa owns)
-Source: PaySim (Kaggle), synthetic mobile-money transactions.
-TODO: size, fraud rate, columns, split by step, leakage prevention, limitations.
+# Data card: PaySim (Balaa)
+
+All numbers below come from `python -m features.prepare_data data/paysim.csv` (`docs/demo/data_summary.json`)
+and `features/eda.ipynb` (`docs/eda/*.json`). Rerun those to refresh them.
+
+## Source
+- **PaySim**, a synthetic mobile-money dataset (Kaggle `ealaxi/paysim1`; paper: E. A. Lopez-Rojas, A. Elmir,
+  S. Axelsson, *PaySim: A financial mobile money simulator for fraud detection*, EMSS 2016).
+- Licence: CC BY-SA 4.0 according to the Kaggle page. Confirm before publishing.
+- Our copy came from a public Hugging Face mirror (`theman10/paysim`, `paysim.csv`). It is 493,534,783 bytes,
+  the same size as the Kaggle original, with the same 11 columns and the published row and fraud counts.
+- **Synthetic, so there is no real personal data.** Account IDs (`nameOrig`, `nameDest`) are generated strings.
+
+## Size and content
+| | |
+|---|---|
+| Rows | 6,362,620 |
+| Time span | steps 1 to 743 (1 step = 1 hour, about 31 days) |
+| Fraud (`isFraud = 1`) | 8,213 (0.129%) |
+| Fraud by type | TRANSFER 4,097 · CASH_OUT 4,116 · CASH_IN, DEBIT, PAYMENT 0 |
+| Columns | step, type, amount, nameOrig, oldbalanceOrg, newbalanceOrig, nameDest, oldbalanceDest, newbalanceDest, isFraud, isFlaggedFraud |
+
+## Quality checks
+| Check | Result |
+|---|---|
+| Null cells | 0 |
+| Duplicate rows | 0 |
+| Negative amounts | 0 |
+| Zero amounts | 16 (kept: valid edge case) |
+| `isFlaggedFraud` | 16 rows. This is PaySim's own rule output, so it is **dropped** because it leaks the label. |
+| Sender's books do not add up (`newbalanceOrig + amount != oldbalanceOrg`), TRANSFER/CASH_OUT | 90.3% of rows |
+| Recipient's books do not add up, TRANSFER/CASH_OUT | 22.7% of rows |
+
+The balance inconsistencies are kept on purpose: they are how PaySim encodes its accounts, and they are
+known to carry fraud signal (see Limitations).
+
+## Features (`features/features.py`)
+One function, `compute_live_features(txn, state)`, is used by the live API **and** by training
+(`build_feature_frame(df)` replays rows in step order through it), so training and serving values are identical.
+`features/tests/test_features.py` checks this, and that no future payment changes a past payment's features.
+
+| Feature | Meaning | In model |
+|---|---|---|
+| `is_transfer` | type is TRANSFER (otherwise CASH_OUT) | yes |
+| `amount`, `oldbalanceOrg`, `newbalanceOrig`, `oldbalanceDest`, `newbalanceDest` | raw values | yes |
+| `err_bal_orig` | `newbalanceOrig + amount - oldbalanceOrg` | yes |
+| `err_bal_dest` | `oldbalanceDest + amount - newbalanceDest` | yes |
+| `full_drain` | amount ≥ sender balance (and balance > 0) | yes |
+| `amt_to_bal` | `amount / (oldbalanceOrg + 1)` | yes |
+| `hour` | `step mod 24` | yes |
+| `type_*` | one-hot type | no (rules) |
+| `new_recipient` | first payment from this sender to this recipient | no (rules, reasons) |
+| `sender_txn_count_recent` | sender's earlier payments in the last 6 steps | no (rules, reasons) |
+| `recipient_inbound_count_recent` | earlier payments into this recipient in the last 6 steps | no (rules, reasons) |
+
+## Splits (time-based, never random)
+| Split | Steps | Rows | Fraud | Fraud rate |
+|---|---|---|---|---|
+| train | 1 to 500 | 6,061,807 | 5,561 | 0.09% |
+| val | 501 to 620 | 209,984 | 1,286 | 0.61% |
+| test | 621 to 743 | 90,829 | 1,366 | 1.50% |
+
+Saved as `data/{train,val,test}.parquet` (raw columns, all features, `isFraud`). Not committed; share through Drive.
+**Note:** activity collapses after step 400 while fraud stays at about 10 cases per step
+(`docs/eda/3_activity_over_time.png`), so val and test have a much higher fraud rate than train.
+Report PR-AUC and recall at a fixed false-positive rate, never accuracy.
+
+## Demo files (`docs/demo/`, committed)
+| File | Rows | Fraud | What it is |
+|---|---|---|---|
+| `demo_stream.csv` | 20,000 | 1,366 | All test-period fraud plus a random sample of test-period legit payments, in step order. **The fraud share (6.8%) is far above reality (0.13%)** so the demo has something to catch. |
+| `story_scam_drain.csv` | 14 | 2 | Real rows: 12 ordinary payments, then a real night-time (hour 0) fraud that empties a 2.63M account into a new recipient, followed by the CASH_OUT that moves it on. |
+| `story_mule_burst.csv` | 20 | 20 | **Synthetic** (column `synthetic = 1`). PaySim has no mule accounts, so 20 real legit TRANSFERs from different senders were redirected to one new recipient `C_MULE_DEMO` over 2 steps, with consistent recipient balances. Labelled fraud for the demo only. |
+| `story_normal_day.csv` | 200 | 0 | Real ordinary payments from one busy daytime step (step 687), all types. |
+| `edge_cases.json` | 10 | | Bad and unusual requests for the API, checked by `api/tests/test_edge_cases.py`. |
+
+Every file has a `txn_id` and the PaySim columns, so `python -m api.producer docs/demo/<file>.csv` replays it as-is.
+
+## Limitations (say these out loud)
+1. **PaySim is synthetic and easy.** Fraud is generated by a simple agent: it empties the account
+   (97.7% of fraud is a full drain) with a TRANSFER and then a CASH_OUT.
+2. **Balance-field leakage.** The balance fields behave differently for fraud because of how the simulator
+   writes them (`docs/eda/5_balance_patterns.png`). On test-period TRANSFER and CASH_OUT, **one raw feature alone,
+   `err_bal_orig`, reaches 0.94 AUC** (`docs/eda/single_feature_auc.json`). The model's near-perfect test
+   score (PR-AUC ≈ 1.0) mostly measures this simulator artifact, not real-world skill. Real bank data would score lower.
+3. **No account history.** 99.85% of senders appear once and no fraud recipient receives more than 2 payments,
+   so the history features carry almost no signal on PaySim. That is why they feed rules and reasons, not the model,
+   and why the Mule Burst story had to be synthetic.
+4. **Distribution shift over time** (see Splits). Later steps are sparse and fraud-heavy.
+5. **Fairness.** There are no demographic fields, so fairness across customer groups cannot be measured on this data.

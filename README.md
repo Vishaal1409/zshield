@@ -55,7 +55,12 @@ TODO (Vishaal): what we actually ran on Z, with screenshots. Be exact, do not ov
 TODO (Arun): link docs/responsible_ai.md
 
 ## Data
-Synthetic transactions (PaySim). No real personal data. See features/data_card.md.
+Synthetic transactions (PaySim, 6.36M rows, 0.13% fraud). No real personal data.
+- Data card, splits and limitations: [features/data_card.md](features/data_card.md)
+- One-page methodology for the deck: [docs/data_methodology.md](docs/data_methodology.md)
+- EDA charts: [docs/eda/](docs/eda/) (notebook: `features/eda.ipynb`)
+- Demo stream, 3 demo stories and 10 edge cases: [docs/demo/](docs/demo/)
+- Rebuild everything: `python -m features.prepare_data data/paysim.csv` (see [data/README.md](data/README.md))
 
 ## Team
 Vishaal (lead, IBM Z), Balaa (data), Joshua (ML), Abhinava (backend), Armaan (dashboard), Arun (GenAI, story)

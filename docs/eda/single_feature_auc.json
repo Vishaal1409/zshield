@@ -1,0 +1,12 @@
+{
+  "split": "test steps 621-743, TRANSFER+CASH_OUT",
+  "rows": 38475,
+  "auc": {
+    "err_bal_orig": 0.9393,
+    "err_bal_dest": 0.7477,
+    "full_drain": 0.7225,
+    "amt_to_bal": 0.8904,
+    "amount": 0.6803,
+    "hour": 0.6327
+  }
+}
