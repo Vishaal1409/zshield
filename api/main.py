@@ -161,9 +161,16 @@ def _score_new(rt, txn: Txn) -> ScoreResponse:
     resp = ScoreResponse(txn_id=txn.txn_id, risk_score=round(s, 4), decision=decision, reasons=reasons,
                          alert_text=alert, latency_ms=round(latency_ms, 3))
     try:
+<<<<<<< HEAD
         rt.db.insert({**resp.model_dump(), "step": data["step"], "amount": data["amount"],
                       "type": data["type"], "nameOrig": data["nameOrig"], "nameDest": data["nameDest"],
                       "explain_ms": round(explain_ms, 3), "scorer": scorer_label, "error": error})
+=======
+        rt.db.insert({**resp.model_dump(), "step": data["step"], "type": data["type"],
+                      "nameOrig": data["nameOrig"], "nameDest": data["nameDest"],
+                      "amount": data["amount"],
+                      "explain_ms": round(explain_ms, 3), "scorer": rt.scorer.name, "error": error})
+>>>>>>> origin/ARMAANBRANCH
     except Exception:
         log.exception("Audit log write failed for %s", txn.txn_id)   # never block a payment decision
     return resp
@@ -180,8 +187,13 @@ def alerts():
 
 
 @app.get("/recent")
+<<<<<<< HEAD
 def recent(limit: int = Query(50, ge=1, le=1000)):
     """Latest decisions of ALL types (including APPROVE), newest first. Same fields as /alerts."""
+=======
+def recent(limit: int = Query(default=200, ge=1, le=1000)):
+    """Recent scored transactions for the dashboard stream and latency chart."""
+>>>>>>> origin/ARMAANBRANCH
     return app.state.rt.db.recent(limit)
 
 

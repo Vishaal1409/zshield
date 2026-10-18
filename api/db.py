@@ -11,9 +11,15 @@ CREATE TABLE IF NOT EXISTS decisions (
     txn_id         TEXT PRIMARY KEY,
     ts             REAL NOT NULL,
     step           INTEGER,
+<<<<<<< HEAD
     type           TEXT,
     nameOrig       TEXT,
     nameDest       TEXT,
+=======
+    type           TEXT NOT NULL DEFAULT '',
+    nameOrig       TEXT NOT NULL DEFAULT '',
+    nameDest       TEXT NOT NULL DEFAULT '',
+>>>>>>> origin/ARMAANBRANCH
     amount         REAL NOT NULL,
     risk_score     REAL NOT NULL,
     decision       TEXT NOT NULL,
@@ -40,6 +46,7 @@ class AuditDB:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.executescript(SCHEMA)
+<<<<<<< HEAD
         self._migrate()
 
     def _migrate(self) -> None:
@@ -48,6 +55,17 @@ class AuditDB:
         for col in ("type", "nameOrig", "nameDest"):
             if col not in have:
                 self._conn.execute(f"ALTER TABLE decisions ADD COLUMN {col} TEXT")
+=======
+        # Upgrade audit databases created before transaction details were retained.
+        existing = {row[1] for row in self._conn.execute("PRAGMA table_info(decisions)")}
+        for column, declaration in (
+            ("type", "TEXT NOT NULL DEFAULT ''"),
+            ("nameOrig", "TEXT NOT NULL DEFAULT ''"),
+            ("nameDest", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if column not in existing:
+                self._conn.execute(f"ALTER TABLE decisions ADD COLUMN {column} {declaration}")
+>>>>>>> origin/ARMAANBRANCH
 
     def close(self) -> None:
         with self._lock:
@@ -58,12 +76,21 @@ class AuditDB:
         """Insert a decision. Returns False if txn_id already exists (duplicate)."""
         with self._lock:
             cur = self._conn.execute(
+<<<<<<< HEAD
                 "INSERT OR IGNORE INTO decisions (txn_id, ts, step, type, nameOrig, nameDest, amount,"
                 " risk_score, decision, reasons, alert_text, latency_ms, explain_ms, scorer, error)"
                 " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (rec["txn_id"], time.time(), rec.get("step"), rec.get("type"), rec.get("nameOrig"),
                  rec.get("nameDest"), rec["amount"], rec["risk_score"], rec["decision"],
                  json.dumps(rec["reasons"]), rec["alert_text"], rec["latency_ms"],
+=======
+                "INSERT OR IGNORE INTO decisions (txn_id, ts, step, type, nameOrig, nameDest, amount, risk_score, decision,"
+                " reasons, alert_text, latency_ms, explain_ms, scorer, error)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (rec["txn_id"], time.time(), rec.get("step"), rec.get("type", ""),
+                 rec.get("nameOrig", ""), rec.get("nameDest", ""), rec["amount"], rec["risk_score"],
+                 rec["decision"], json.dumps(rec["reasons"]), rec["alert_text"], rec["latency_ms"],
+>>>>>>> origin/ARMAANBRANCH
                  rec.get("explain_ms", 0.0), rec.get("scorer", ""), rec.get("error")),
             )
             return cur.rowcount == 1
@@ -98,6 +125,7 @@ class AuditDB:
     def _feed(self, where: str, limit: int) -> list:
         with self._lock:
             rows = self._conn.execute(
+<<<<<<< HEAD
                 f"SELECT {self._FEED_COLS} FROM decisions {where} ORDER BY ts DESC, rowid DESC LIMIT ?",
                 (limit,)).fetchall()
         return [self._row(r) for r in rows]
@@ -109,6 +137,22 @@ class AuditDB:
     def recent(self, limit: int = 50) -> list:
         """Latest decisions of every type, including APPROVE, newest first."""
         return self._feed("", limit)
+=======
+                "SELECT txn_id, step, type, nameOrig, nameDest, amount, risk_score, decision,"
+                " reasons, alert_text, analyst_status, latency_ms, ts"
+                " FROM decisions WHERE decision != 'APPROVE' ORDER BY ts DESC, rowid DESC LIMIT ?",
+                (limit,)).fetchall()
+        return [self._row(r) for r in rows]
+
+    def recent(self, limit: int = 200) -> list:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT txn_id, step, type, nameOrig, nameDest, amount, risk_score, decision,"
+                " reasons, alert_text, analyst_status, latency_ms, ts"
+                " FROM decisions ORDER BY ts DESC, rowid DESC LIMIT ?",
+                (limit,)).fetchall()
+        return [self._row(r) for r in rows]
+>>>>>>> origin/ARMAANBRANCH
 
     def stats(self) -> dict:
         with self._lock:
