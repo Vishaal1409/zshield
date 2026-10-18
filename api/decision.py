@@ -44,7 +44,7 @@ def rule_reasons(f: dict) -> list:
     """Plain-language reasons from features. Used until Joshua's SHAP explain function is wired in,
     and as the fallback if it fails. Never invents a reason that the features do not show."""
     r = []
-    if f.get("is_full_drain"):
+    if f.get("full_drain"):
         r.append("Account emptied in one transfer")
     if f.get("recipient_inbound_count_recent", 0) >= 5:
         r.append("Many payments to this recipient in a short time")
@@ -52,8 +52,8 @@ def rule_reasons(f: dict) -> list:
         r.append("New recipient")
     if f.get("sender_txn_count_recent", 0) >= 10:
         r.append("Rapid repeat payments from this account")
-    if f.get("hour_of_day", 12) < 6 and f.get("amount_to_balance", 0) > 0.5:
+    if f.get("hour", 12) < 6 and f.get("amt_to_bal", 0) > 0.5:
         r.append("Large payment at an unusual hour")
-    if abs(f.get("error_balance_orig", 0)) > 1.0:   # tolerate cents-level rounding
+    if abs(f.get("err_bal_orig", 0)) > 1.0:   # tolerate cents-level rounding
         r.append("Balances do not add up")
     return r[:3] or ["Unusual activity"]

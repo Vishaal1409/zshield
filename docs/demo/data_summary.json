@@ -1,0 +1,113 @@
+{
+  "quality": {
+    "rows": 6362620,
+    "columns": [
+      "step",
+      "type",
+      "amount",
+      "nameOrig",
+      "oldbalanceOrg",
+      "newbalanceOrig",
+      "nameDest",
+      "oldbalanceDest",
+      "newbalanceDest",
+      "isFraud",
+      "isFlaggedFraud"
+    ],
+    "steps": [
+      1,
+      743
+    ],
+    "fraud_count": 8213,
+    "fraud_rate": 0.001290820448180152,
+    "fraud_by_type": {
+      "CASH_IN": 0,
+      "CASH_OUT": 4116,
+      "DEBIT": 0,
+      "PAYMENT": 0,
+      "TRANSFER": 4097
+    },
+    "rows_by_type": {
+      "CASH_OUT": 2237500,
+      "PAYMENT": 2151495,
+      "CASH_IN": 1399284,
+      "TRANSFER": 532909,
+      "DEBIT": 41432
+    },
+    "isFlaggedFraud_count": 16,
+    "null_cells": 0,
+    "duplicate_rows": 0,
+    "negative_amounts": 0,
+    "zero_amounts": 16,
+    "senders_seen_once_share": 0.998536510198547,
+    "max_payments_into_one_fraud_recipient": 2,
+    "fraud_full_drain_share": 0.9767441860465116,
+    "transfer_cashout_orig_balance_error_share": 0.9031410163625659,
+    "transfer_cashout_dest_balance_error_share": 0.226766878103558,
+    "dest_balances_both_zero_share_fraud": 0.49628637525873615,
+    "dest_balances_both_zero_share_legit_transfer_cashout": 0.0006176245277308345
+  },
+  "demo_files": {
+    "demo_stream.csv": {
+      "rows": 20000,
+      "fraud": 1366,
+      "steps": [
+        621,
+        743
+      ]
+    },
+    "story_scam_drain.csv": {
+      "rows": 14,
+      "fraud": 2,
+      "steps": [
+        621,
+        624
+      ]
+    },
+    "story_mule_burst.csv": {
+      "rows": 20,
+      "fraud": 20,
+      "steps": [
+        637,
+        638
+      ]
+    },
+    "story_normal_day.csv": {
+      "rows": 200,
+      "fraud": 0,
+      "steps": [
+        687,
+        687
+      ]
+    }
+  },
+  "splits": {
+    "train": {
+      "rows": 6061807,
+      "fraud": 5561,
+      "fraud_rate": 0.0009173832159288476,
+      "steps": [
+        1,
+        500
+      ]
+    },
+    "val": {
+      "rows": 209984,
+      "fraud": 1286,
+      "fraud_rate": 0.006124276135324596,
+      "steps": [
+        501,
+        620
+      ]
+    },
+    "test": {
+      "rows": 90829,
+      "fraud": 1366,
+      "fraud_rate": 0.015039249578878993,
+      "steps": [
+        621,
+        743
+      ]
+    }
+  }
+}
